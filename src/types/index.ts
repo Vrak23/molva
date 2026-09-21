@@ -1,4 +1,4 @@
-export type ReleaseType = 'LP' | 'EP' | 'Mixtape' | 'Compilación' | 'Sesión';
+export type ReleaseType = 'LP' | 'EP' | 'Single' | 'Mixtape' | 'Compilación' | 'Sesión';
 
 export interface Track {
   id: string;
@@ -24,10 +24,11 @@ export interface Playlist {
   youtube_url?: string;
   tags?: string[];
   
-  // Metadatos de Lanzamiento tipo Álbum
+  // Metadatos de Lanzamiento tipo Álbum / Single
   release_date: string; // Fecha de creación / lanzamiento (YYYY-MM-DD o ISO)
   release_type: ReleaseType;
   catalog_number?: string;
+  upcoming_album?: string; // Título de la próxima playlist / álbum al que pertenecerá si es un Single/Adelanto
   
   // Metadatos del Creador / Perfil
   creator_id?: string;

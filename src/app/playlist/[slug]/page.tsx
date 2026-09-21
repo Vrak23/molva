@@ -116,24 +116,15 @@ export default function PlaylistDetailPage({
         />
       )}
 
-      {/* Barra de Navegación Superior con Botones de Retroceso y Compartir */}
+      {/* Barra de Navegación Superior: Botón Volver y Compartir */}
       <div className="relative z-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-300 hover:text-white transition-colors bg-zinc-900/90 backdrop-blur-md px-3.5 py-2 rounded-lg border border-zinc-800 hover:border-zinc-600 shadow-lg"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Volver Atrás</span>
-          </button>
-
-          <Link
-            href="/"
-            className="hidden sm:inline-flex items-center text-xs font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors px-2 py-2"
-          >
-            / Catálogo General
-          </Link>
-        </div>
+        <button
+          onClick={() => router.back()}
+          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-300 hover:text-white transition-colors bg-zinc-900/90 backdrop-blur-md px-3.5 py-2 rounded-lg border border-zinc-800 hover:border-zinc-600 shadow-lg"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver al Catálogo</span>
+        </button>
 
         <button
           onClick={handleShare}
@@ -316,6 +307,18 @@ export default function PlaylistDetailPage({
               {playlist.title}
             </h1>
 
+            {playlist.upcoming_album && playlist.release_type === 'Single' && (
+              <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-700/70 space-y-1">
+                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-200">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <span>Sencillo / Adelanto Oficial</span>
+                </div>
+                <p className="text-xs text-zinc-300 font-sans">
+                  Tema incluido en el próximo álbum / playlist: <strong className="text-white font-semibold">{playlist.upcoming_album}</strong>
+                </p>
+              </div>
+            )}
+
             {playlist.description && (
               <p className="text-base text-zinc-400 font-sans leading-relaxed">
                 {playlist.description}
@@ -362,19 +365,11 @@ export default function PlaylistDetailPage({
             )}
           </section>
 
-          {/* Barra de Retroceso y Navegación al Final de la Página */}
-          <div className="pt-6 border-t border-zinc-800 flex items-center justify-between">
-            <button
-              onClick={() => router.back()}
-              className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-900 border border-zinc-800 px-4 py-2.5 rounded-lg hover:border-zinc-600"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Volver a la Página Anterior</span>
-            </button>
-
+          {/* Navegación al Final de la Página */}
+          <div className="pt-6 border-t border-zinc-800/60 flex items-center justify-end">
             <button
               onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-500 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors py-2 px-3 rounded-lg hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
             >
               <span>Subir al Inicio</span>
               <ChevronUp className="w-4 h-4" />

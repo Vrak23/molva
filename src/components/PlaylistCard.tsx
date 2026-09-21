@@ -96,6 +96,12 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
             </h2>
           </Link>
 
+          {playlist.upcoming_album && playlist.release_type === 'Single' && (
+            <p className="mt-1 text-[11px] font-mono text-zinc-400 line-clamp-1">
+              <span className="text-zinc-600">↳</span> Adelanto de: <span className="text-zinc-300 font-medium">{playlist.upcoming_album}</span>
+            </p>
+          )}
+
           {playlist.description && (
             <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
               {playlist.description}

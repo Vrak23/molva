@@ -30,7 +30,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-const RELEASE_TYPES: ReleaseType[] = ['LP', 'EP', 'Mixtape', 'Compilación', 'Sesión'];
+const RELEASE_TYPES: ReleaseType[] = ['LP', 'EP', 'Single', 'Mixtape', 'Compilación', 'Sesión'];
 
 export default function AdminPage() {
   const router = useRouter();
@@ -267,6 +267,7 @@ export default function AdminPage() {
       release_date: today,
       release_type: 'LP',
       catalog_number: '',
+      upcoming_album: '',
       creator_username: userProfile.username || 'curador',
       creator_name: userProfile.displayName || userProfile.username || 'Curador',
       creator_avatar: userProfile.avatarUrl || '',
@@ -1048,6 +1049,24 @@ export default function AdminPage() {
                       className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500 font-mono"
                     />
                   </div>
+
+                  {editingPlaylist.release_type === 'Single' && (
+                    <div className="md:col-span-3 pt-3 border-t border-zinc-800">
+                      <label className="block text-[11px] font-mono uppercase text-zinc-300 mb-1">
+                        Álbum / Playlist a la que pertenecerá este Single (Adelanto):
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="ej. Nocturnas de Otoño (nombre del próximo lanzamiento / álbum)"
+                        value={editingPlaylist.upcoming_album || ''}
+                        onChange={(e) => setEditingPlaylist({ ...editingPlaylist, upcoming_album: e.target.value })}
+                        className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
+                      />
+                      <p className="text-[11px] font-mono text-zinc-500 mt-1">
+                        Se etiquetará en el catálogo como Single / Adelanto del próximo lanzamiento.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* 2. Información Principal y Portada */}

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { Disc, User, LogIn, ArrowLeft } from 'lucide-react';
+import { Disc, User, LogIn } from 'lucide-react';
 import { UserProfile } from '@/types';
 
 export function Navbar() {
@@ -68,19 +68,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Lado Izquierdo: Botón Retroceso y Logo */}
+        {/* Lado Izquierdo: Logo */}
         <div className="flex items-center gap-4">
-          {!isHome && (
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors"
-              title="Retroceder a la página anterior"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Atrás</span>
-            </button>
-          )}
-
           <Link 
             href="/" 
             className="flex items-center gap-3 group transition-opacity hover:opacity-80"

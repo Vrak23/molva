@@ -34,6 +34,7 @@ create table if not exists playlists (
   release_date text default to_char(now(), 'YYYY-MM-DD'),
   release_type text default 'LP',
   catalog_number text,
+  upcoming_album text,
   
   -- Creador
   creator_username text not null,

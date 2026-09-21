@@ -93,6 +93,7 @@ export async function savePlaylist(playlist: Playlist): Promise<{ success: boole
         release_date: playlist.release_date,
         release_type: playlist.release_type,
         catalog_number: playlist.catalog_number,
+        upcoming_album: playlist.upcoming_album,
         creator_username: playlist.creator_username,
         creator_name: playlist.creator_name,
         creator_avatar: playlist.creator_avatar,
