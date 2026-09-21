@@ -3,6 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 // Cuenta Ficticia Pre-registrada para Demostración
 const DEMO_ACCOUNTS = [
   {
+    username: 'rodrigollanos',
+    displayName: 'Rodrigo Llanos',
+    email: 'rodrigo@molva.music',
+    password: 'canon123',
+    bio: 'Fundador y Curador Principal en Molva.',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=400&auto=format&fit=crop',
+    spotifyUrl: 'https://open.spotify.com',
+  },
+  {
     username: 'alexander_vance',
     displayName: 'Alexander Vance',
     email: 'alexander@canon.music',
