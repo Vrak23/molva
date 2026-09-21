@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Playlist, Track, UserProfile, ReleaseType } from '@/types';
-import { getPlaylists, savePlaylist, deletePlaylist } from '@/lib/supabase';
+import { getPlaylists, savePlaylist, deletePlaylist, isUserCreator } from '@/lib/supabase';
 import { extractDominantColor } from '@/lib/color-extract';
 import { compressImage } from '@/lib/image-compress';
 import { 
@@ -119,6 +119,16 @@ export default function AdminPage() {
 
   const loadPlaylists = async () => {
     const data = await getPlaylists();
+    if (userProfile.username && isUserCreator(undefined, userProfile.username)) {
+      for (const p of data) {
+        if (isUserCreator(p.creator_username, userProfile.username) && p.creator_username !== userProfile.username) {
+          p.creator_username = userProfile.username;
+          p.creator_name = userProfile.displayName || userProfile.username;
+          p.creator_avatar = userProfile.avatarUrl || p.creator_avatar;
+          savePlaylist(p);
+        }
+      }
+    }
     setPlaylists(data);
   };
 
@@ -883,7 +893,7 @@ export default function AdminPage() {
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase font-mono tracking-wider text-white">
-              Mis Lanzamientos ({playlists.filter(p => p.creator_username?.toLowerCase() === userProfile.username?.toLowerCase()).length})
+              Mis Lanzamientos ({playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length})
             </h2>
 
             <div className="flex items-center gap-3">
@@ -1337,13 +1347,13 @@ export default function AdminPage() {
           <div className="bg-[#121215] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
             <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
               <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-                Mis Lanzamientos Publicados ({playlists.filter(p => p.creator_username.toLowerCase() === userProfile.username.toLowerCase()).length})
+                Mis Lanzamientos Publicados ({playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length})
               </h2>
             </div>
 
             <div className="divide-y divide-zinc-800/60">
               {playlists
-                .filter(p => p.creator_username.toLowerCase() === userProfile.username.toLowerCase())
+                .filter(p => isUserCreator(p.creator_username, userProfile.username))
                 .map((playlist) => (
                 <div 
                   key={playlist.id} 
@@ -1375,7 +1385,7 @@ export default function AdminPage() {
                         </h3>
                       </div>
                       <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 mt-0.5">
-                        <span>@{playlist.creator_username}</span>
+                        <span>@{playlist.creator_username || userProfile.username}</span>
                         <span>•</span>
                         <span>{playlist.tracks?.length || 0} tracks</span>
                         <span>•</span>
@@ -1413,7 +1423,7 @@ export default function AdminPage() {
                 </div>
               ))}
 
-              {playlists.filter(p => p.creator_username.toLowerCase() === userProfile.username.toLowerCase()).length === 0 && (
+              {playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length === 0 && (
                 <div className="py-12 text-center text-xs font-mono text-zinc-500">
                   Aún no has publicado ningún lanzamiento con esta cuenta. Haz clic en "Nuevo Lanzamiento" o "Importar Enlace" para publicar el primero.
                 </div>

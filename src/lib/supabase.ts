@@ -40,10 +40,32 @@ export async function getPlaylists(): Promise<Playlist[]> {
   return INITIAL_MOCK_PLAYLISTS;
 }
 
+export function isUserCreator(playlistCreator?: string, currentUsername?: string): boolean {
+  if (!currentUsername) return false;
+  const curr = currentUsername.toLowerCase();
+  const creator = (playlistCreator || '').toLowerCase();
+  
+  if (creator === curr) return true;
+  
+  // Reclamar/vincular automáticamente los lanzamientos creados anteriormente en local por Rodrigo / Admin / Curador
+  if (curr === 'v_rak' || curr === 'rodrigo' || curr === 'rodrigollanos') {
+    return (
+      creator === 'v_rak' || 
+      creator === 'rodrigo' || 
+      creator === 'rodrigollanos' || 
+      creator === 'admin' || 
+      creator === 'curador' || 
+      creator === ''
+    );
+  }
+  
+  return false;
+}
+
 // Obtener playlists por creador
 export async function getPlaylistsByCreator(username: string): Promise<Playlist[]> {
   const all = await getPlaylists();
-  return all.filter(p => (p.creator_username || '').toLowerCase() === username.toLowerCase());
+  return all.filter(p => isUserCreator(p.creator_username, username));
 }
 
 // Obtener una playlist por slug
