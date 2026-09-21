@@ -62,3 +62,12 @@ body {
   border-color: rgba(255, 255, 255, 0.25);
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.8);
 }
+
+/* Ocultar barra de scroll en contenedores horizontales móviles */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

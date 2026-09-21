@@ -1376,9 +1376,9 @@ export default function AdminPage() {
                 .map((playlist) => (
                 <div 
                   key={playlist.id} 
-                  className="p-4 sm:p-5 flex items-center justify-between gap-4 hover:bg-zinc-900/40 transition-colors"
+                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-zinc-900/40 transition-colors"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                     <div className="relative w-12 h-12 rounded bg-black border border-zinc-800 overflow-hidden flex-shrink-0">
                       {playlist.cover_url ? (
                         <Image
@@ -1394,16 +1394,16 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-400">
+                        <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-400 flex-shrink-0">
                           {playlist.release_type || 'LP'}
                         </span>
                         <h3 className="text-sm font-semibold text-white truncate">
                           {playlist.title}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 mt-0.5">
+                      <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 mt-0.5 truncate">
                         <span>@{playlist.creator_username || userProfile.username}</span>
                         <span>•</span>
                         <span>{playlist.tracks?.length || 0} tracks</span>
@@ -1413,7 +1413,7 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/40 w-full sm:w-auto justify-end">
                     <Link
                       href={`/playlist/${playlist.slug}`}
                       target="_blank"

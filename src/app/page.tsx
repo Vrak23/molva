@@ -67,24 +67,24 @@ export default function HomePage() {
     <div className="space-y-10">
       {/* Portada / Hero de la Plataforma */}
       <section className="pt-2 pb-6 border-b border-zinc-800/60">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">
               <Disc3 className="w-3.5 h-3.5 text-zinc-400" />
               <span>Biblioteca Abierta de Curaduría & Lanzamientos</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-white font-sans">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-tight text-white font-sans">
               Explorar <span className="font-semibold text-zinc-100">Playlists & Álbumes</span>
             </h1>
-            <p className="mt-2 text-sm text-zinc-400 max-w-xl leading-relaxed">
+            <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed">
               Descubre curadurías musicales concebidas como lanzamientos discográficos: con fecha de estreno, fichas técnicas y notas canción por canción publicadas por la comunidad.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <Link
               href="/admin"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
+              className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Lanzar Playlist</span>
@@ -100,8 +100,8 @@ export default function HomePage() {
 
       {/* Barra de Búsqueda, Filtro de Formato y Selector de Orden */}
       {playlists.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <section className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
             <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <input
@@ -116,7 +116,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-xs font-mono text-zinc-300 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-xs font-mono text-zinc-300 transition-colors"
                 title="Cambiar orden de fecha"
               >
                 <Calendar className="w-3.5 h-3.5 text-zinc-400" />
@@ -126,8 +126,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Filtros de Formato (Todos, LP, EP, Singles, etc.) */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
+          {/* Filtros de Formato (Todos, LP, EP, Singles, etc.) con scroll horizontal suave */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs font-mono">
             {[
               { id: 'ALL', label: 'Todos los formatos' },
               { id: 'LP', label: 'Álbumes (LP)' },
@@ -138,7 +138,7 @@ export default function HomePage() {
               <button
                 key={fmt.id}
                 onClick={() => setSelectedFormat(fmt.id)}
-                className={`px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 rounded-lg border transition-colors whitespace-nowrap flex-shrink-0 ${
                   selectedFormat === fmt.id
                     ? 'bg-white text-black font-semibold border-white'
                     : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white hover:border-zinc-700'
@@ -154,13 +154,13 @@ export default function HomePage() {
       {/* Catálogo de Lanzamientos */}
       <section>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[1, 2, 3].map((n) => (
               <div key={n} className="aspect-square bg-zinc-900/40 rounded-xl animate-pulse border border-zinc-800" />
             ))}
           </div>
         ) : processedPlaylists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {processedPlaylists.map((playlist) => (
               <PlaylistCard key={playlist.id} playlist={playlist} />
             ))}

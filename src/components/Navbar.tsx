@@ -67,25 +67,25 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Lado Izquierdo: Logo */}
         <div className="flex items-center gap-4">
           <Link 
             href="/" 
-            className="flex items-center gap-3 group transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 group transition-opacity hover:opacity-80"
           >
-            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/40">
+            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/40 flex-shrink-0">
               <Disc className="w-4 h-4 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-mono tracking-widest text-zinc-400 uppercase">Biblioteca Sonora</span>
+              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-zinc-400 uppercase hidden xs:block">Biblioteca Sonora</span>
               <span className="text-sm font-semibold tracking-tight text-white">MOLVA</span>
             </div>
           </Link>
         </div>
 
         {/* Lado Derecho: Navegación y Cuenta Activa */}
-        <nav className="flex items-center gap-4 text-xs font-mono uppercase tracking-wider">
+        <nav className="flex items-center gap-3 sm:gap-4 text-xs font-mono uppercase tracking-wider">
           <Link 
             href="/" 
             className={`transition-colors ${pathname === '/' ? 'text-white font-semibold' : 'text-zinc-400 hover:text-white'}`}
@@ -98,7 +98,7 @@ export function Navbar() {
           {user ? (
             <Link 
               href="/admin" 
-              className={`flex items-center gap-2 px-2.5 py-1 rounded-md border transition-all ${
+              className={`flex items-center gap-2 px-2 sm:px-2.5 py-1 rounded-md border transition-all ${
                 pathname === '/admin'
                   ? 'bg-zinc-800 border-zinc-600 text-white font-medium'
                   : 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-600'
@@ -111,7 +111,7 @@ export function Navbar() {
               ) : (
                 <User className="w-3.5 h-3.5 text-zinc-400" />
               )}
-              <span className="truncate max-w-[120px] normal-case font-sans font-medium text-xs">
+              <span className="truncate max-w-[85px] sm:max-w-[130px] normal-case font-sans font-medium text-xs">
                 {user.displayName || user.username}
               </span>
             </Link>

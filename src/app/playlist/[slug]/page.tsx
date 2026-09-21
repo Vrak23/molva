@@ -145,9 +145,9 @@ export default function PlaylistDetailPage({
       </div>
 
       {/* Estructura Principal */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
         {/* Columna Izquierda: Artwork & Ficha Discográfica */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-6 max-w-md mx-auto lg:max-w-none w-full">
           {/* Portada Principal */}
           <div className="group relative aspect-square w-full rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
             {playlist.cover_url ? (
@@ -292,9 +292,9 @@ export default function PlaylistDetailPage({
         </div>
 
         {/* Columna Derecha: Liner Notes & Tracklist */}
-        <div className="lg:col-span-8 space-y-10">
+        <div className="lg:col-span-8 space-y-6 sm:space-y-8">
           {/* Título */}
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400">
               <span>{playlist.release_type || 'LP'}</span>
               <span>•</span>
@@ -303,13 +303,13 @@ export default function PlaylistDetailPage({
               </Link>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white font-sans">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white font-sans">
               {playlist.title}
             </h1>
 
             {playlist.upcoming_album && playlist.release_type === 'Single' && (
-              <div className="p-4 rounded-xl bg-zinc-900/80 border border-zinc-700/70 space-y-1">
-                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-200">
+              <div className="p-3.5 sm:p-4 rounded-xl bg-zinc-900/80 border border-zinc-700/70 space-y-1">
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-200">
                   <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                   <span>Sencillo / Adelanto Oficial</span>
                 </div>
@@ -320,7 +320,7 @@ export default function PlaylistDetailPage({
             )}
 
             {playlist.description && (
-              <p className="text-base text-zinc-400 font-sans leading-relaxed">
+              <p className="text-sm sm:text-base text-zinc-400 font-sans leading-relaxed">
                 {playlist.description}
               </p>
             )}
@@ -328,20 +328,20 @@ export default function PlaylistDetailPage({
 
           {/* Liner Notes */}
           {playlist.story && (
-            <section className="bg-[#121215]/60 backdrop-blur-md border border-zinc-800/80 rounded-xl p-6 space-y-4">
+            <section className="bg-[#121215]/60 backdrop-blur-md border border-zinc-800/80 rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400 pb-2 border-b border-zinc-800">
                 <BookOpen className="w-4 h-4 text-zinc-400" />
                 <span>Liner Notes & Memoria Conceptual</span>
               </div>
 
-              <div className="text-sm text-zinc-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
+              <div className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
                 {playlist.story}
               </div>
             </section>
           )}
 
           {/* Tracklist con Notas */}
-          <section className="bg-[#121215]/80 backdrop-blur-md border border-zinc-800 rounded-xl p-6 space-y-4">
+          <section className="bg-[#121215]/80 backdrop-blur-md border border-zinc-800 rounded-xl p-3.5 sm:p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400">
                 <ListMusic className="w-4 h-4 text-zinc-400" />

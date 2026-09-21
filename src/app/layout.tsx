@@ -20,13 +20,13 @@ export default function RootLayout({
         <Navbar />
 
         {/* Contenido Principal */}
-        <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 relative">
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 relative">
           {children}
         </main>
 
         {/* Pie de Página */}
-        <footer className="w-full border-t border-[#27272a]/40 py-8 mt-20 text-xs font-mono text-zinc-500">
-          <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="w-full border-t border-[#27272a]/40 py-8 mt-12 sm:mt-20 text-xs font-mono text-zinc-500">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
               <span>Molva • Plataforma Comunitaria de Playlists & Lanzamientos</span>

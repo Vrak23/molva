@@ -83,14 +83,14 @@ export default function UserProfilePage({
       </div>
 
       {/* Cabecera de Perfil */}
-      <section className="bg-[#121215] border border-zinc-800 rounded-2xl p-6 sm:p-10 relative overflow-hidden shadow-2xl">
+      <section className="bg-[#121215] border border-zinc-800 rounded-2xl p-5 sm:p-10 relative overflow-hidden shadow-2xl">
         <div 
           className="absolute -top-20 -left-20 w-80 h-80 rounded-full blur-[100px] opacity-20 pointer-events-none bg-zinc-400"
         />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-8 text-center sm:text-left">
+        <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 text-center sm:text-left">
           {/* Avatar Grande */}
-          <div className="relative w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden bg-black border-2 border-zinc-700 shadow-2xl flex-shrink-0 flex items-center justify-center">
+          <div className="relative w-24 h-24 sm:w-36 sm:h-36 rounded-full overflow-hidden bg-black border-2 border-zinc-700 shadow-2xl flex-shrink-0 flex items-center justify-center">
             {profile.avatarUrl ? (
               <Image
                 src={profile.avatarUrl}
@@ -100,18 +100,18 @@ export default function UserProfilePage({
                 className="object-cover"
               />
             ) : (
-              <User className="w-16 h-16 text-zinc-600" />
+              <User className="w-12 h-12 sm:w-16 sm:h-16 text-zinc-600" />
             )}
           </div>
 
           {/* Información */}
-          <div className="flex-1 space-y-4">
+          <div className="flex-1 space-y-3 sm:space-y-4">
             <div className="space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-mono uppercase tracking-widest text-zinc-500">
                 <Disc3 className="w-3.5 h-3.5 text-zinc-400" />
                 <span>Perfil de Curador</span>
               </div>
-              <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-white font-sans">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white font-sans">
                 {profile.displayName || profile.username}
               </h1>
               <p className="font-mono text-xs text-zinc-400">
@@ -120,13 +120,13 @@ export default function UserProfilePage({
             </div>
 
             {profile.bio && (
-              <p className="text-sm text-zinc-300 max-w-xl font-sans leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-300 max-w-xl font-sans leading-relaxed">
                 {profile.bio}
               </p>
             )}
 
             {/* Métricas y Enlaces */}
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-2 text-xs font-mono">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 sm:gap-4 pt-2 text-xs font-mono">
               <div className="px-3 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
                 {playlists.length} {playlists.length === 1 ? 'Lanzamiento' : 'Lanzamientos'}
               </div>
@@ -171,9 +171,9 @@ export default function UserProfilePage({
 
       {/* Catálogo de Lanzamientos */}
       <section className="space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-          <h2 className="text-sm font-semibold uppercase font-mono tracking-wider text-white">
-            Discografía / Lanzamientos de @{profile.username} ({playlists.length})
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800 gap-3 flex-wrap">
+          <h2 className="text-xs sm:text-sm font-semibold uppercase font-mono tracking-wider text-white">
+            Discografía / Lanzamientos ({playlists.length})
           </h2>
 
           {isCurrentUser && (
@@ -188,7 +188,7 @@ export default function UserProfilePage({
         </div>
 
         {playlists.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {playlists.map((playlist) => (
               <PlaylistCard key={playlist.id} playlist={playlist} />
             ))}
