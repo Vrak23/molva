@@ -883,7 +883,7 @@ export default function AdminPage() {
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase font-mono tracking-wider text-white">
-              Catálogo de Lanzamientos ({playlists.length})
+              Mis Lanzamientos ({playlists.filter(p => p.creator_username?.toLowerCase() === userProfile.username?.toLowerCase()).length})
             </h2>
 
             <div className="flex items-center gap-3">

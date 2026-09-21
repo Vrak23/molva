@@ -43,7 +43,7 @@ export async function getPlaylists(): Promise<Playlist[]> {
 // Obtener playlists por creador
 export async function getPlaylistsByCreator(username: string): Promise<Playlist[]> {
   const all = await getPlaylists();
-  return all.filter(p => p.creator_username.toLowerCase() === username.toLowerCase());
+  return all.filter(p => (p.creator_username || '').toLowerCase() === username.toLowerCase());
 }
 
 // Obtener una playlist por slug
