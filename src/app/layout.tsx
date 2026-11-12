@@ -22,6 +22,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`dark scroll-smooth ${robotoCondensed.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300..900;1,300..900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className={`${robotoCondensed.className} bg-[#060608] text-[#ffffff] flex flex-col min-h-screen selection:bg-white selection:text-black antialiased font-sans`}>
         {/* Barra de Navegación Tidal */}
         <Navbar />

@@ -27,8 +27,17 @@ export default function HomePage() {
           if (rawLocal) {
             const map = JSON.parse(rawLocal);
             const target = data[0];
-            const localCustom = map[target.id] || map[target.title];
-            if (localCustom && !localCustom.synced_at) {
+            const localCustom = map[target.id] || map[target.title] || map['default'];
+
+            const hasPendingData = localCustom && (
+              (localCustom.cover_url && !target.cover_url) ||
+              (localCustom.story && !target.story) ||
+              (localCustom.description && localCustom.description !== target.description) ||
+              (localCustom.trackNotes && Object.keys(localCustom.trackNotes).length > 0) ||
+              !localCustom.synced_at
+            );
+
+            if (hasPendingData) {
               const toSync: Playlist = {
                 ...target,
                 ...localCustom,
@@ -190,29 +199,6 @@ export default function HomePage() {
                 <ArrowUpDown className="w-3 h-3 text-[#6e6e78]" />
               </button>
             </div>
-          </div>
-
-          {/* Filtros de Formato Estilo Tidal Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs font-mono">
-            {[
-              { id: 'ALL', label: 'Todos los lanzamientos' },
-              { id: 'Semestral', label: 'Semestrales Tune Tracker' },
-              { id: 'LP', label: 'Álbumes (LP)' },
-              { id: 'EP', label: 'EPs' },
-              { id: 'Compilación', label: 'Compilaciones' },
-            ].map((fmt) => (
-              <button
-                key={fmt.id}
-                onClick={() => setSelectedFormat(fmt.id)}
-                className={`px-3.5 py-1.5 rounded-full border transition-all whitespace-nowrap flex-shrink-0 text-xs ${
-                  selectedFormat === fmt.id
-                    ? 'bg-white text-black font-semibold border-white shadow-[0_0_12px_rgba(255,255,255,0.25)]'
-                    : 'bg-[#0e0e13] text-[#8c8c96] border-white/[0.08] hover:text-white hover:border-white/20'
-                }`}
-              >
-                {fmt.label}
-              </button>
-            ))}
           </div>
         </section>
       )}

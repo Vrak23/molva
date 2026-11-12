@@ -17,15 +17,23 @@
   --muted-dark: #585862;
 }
 
-body {
+body, button, input, textarea, select {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: var(--font-roboto-condensed), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Roboto Condensed', var(--font-roboto-condensed), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, h6, p, a {
+  font-family: 'Roboto Condensed', var(--font-roboto-condensed), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.font-mono, [class*="font-mono"] {
+  font-family: var(--font-geist-mono), monospace !important;
 }
 
 /* Scrollbar Minimalista Estilo Tidal */

@@ -108,15 +108,24 @@ export default function AdminPage() {
       const data = await getPlaylists();
       setPlaylists(data);
 
-      // Si este dispositivo tiene cambios locales pendientes, sincronizarlos automáticamente
+      // Si este dispositivo tiene datos locales (portada, notas, descripción, historia) que faltan en la nube, sincronizarlos
       if (typeof window !== 'undefined' && data && data.length > 0) {
         try {
           const rawLocal = localStorage.getItem('molva_customizations_map');
           if (rawLocal) {
             const map = JSON.parse(rawLocal);
             const target = data[0];
-            const localCustom = map[target.id] || map[target.title];
-            if (localCustom && !localCustom.synced_at) {
+            const localCustom = map[target.id] || map[target.title] || map['default'];
+            
+            const hasPendingData = localCustom && (
+              (localCustom.cover_url && !target.cover_url) ||
+              (localCustom.story && !target.story) ||
+              (localCustom.description && localCustom.description !== target.description) ||
+              (localCustom.trackNotes && Object.keys(localCustom.trackNotes).length > 0) ||
+              !localCustom.synced_at
+            );
+
+            if (hasPendingData) {
               const toSync: Playlist = {
                 ...target,
                 ...localCustom,
@@ -124,13 +133,15 @@ export default function AdminPage() {
               };
               const res = await savePlaylist(toSync);
               if (res.success) {
-                showNotification('✨ Cambios locales de este dispositivo sincronizados con la nube.');
+                showNotification('✨ Cambios locales de este dispositivo sincronizados con éxito a la nube.');
                 const refreshed = await getPlaylists();
                 setPlaylists(refreshed);
               }
             }
           }
-        } catch {}
+        } catch (e) {
+          console.warn('Error en autosync:', e);
+        }
       }
     } finally {
       setSyncing(false);
