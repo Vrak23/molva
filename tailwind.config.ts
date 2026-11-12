@@ -19,9 +19,9 @@ const config: Config = {
         muted: "var(--muted)",
       },
       fontFamily: {
-        mono: ["var(--font-geist-mono)", "monospace"],
-        sans: ["var(--font-roboto-condensed)", "var(--font-geist-sans)", "sans-serif"],
-        serif: ["var(--font-serif)", "serif"],
+        mono: ["'Roboto Condensed'", "var(--font-roboto-condensed)", "sans-serif"],
+        sans: ["'Roboto Condensed'", "var(--font-roboto-condensed)", "sans-serif"],
+        serif: ["'Roboto Condensed'", "var(--font-roboto-condensed)", "sans-serif"],
       },
     },
   },

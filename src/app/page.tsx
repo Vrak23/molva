@@ -137,16 +137,16 @@ export default function HomePage() {
       {/* Barra de Búsqueda, Filtro de Formato y Selector de Orden */}
       {playlists.length > 0 && (
         <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             {/* Buscador */}
             <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6e6e78]" />
               <input
                 type="text"
-                placeholder="Buscar por título, artista, canción, periodo o etiqueta..."
+                placeholder="Buscar por título, artista o etiqueta..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-[#0e0e13] border border-white/[0.08] rounded-lg text-xs text-zinc-100 placeholder-[#6e6e78] focus:outline-none focus:border-white/30 transition-colors font-sans"
+                className="w-full h-10 pl-10 pr-4 bg-[#0e0e13] border border-white/[0.08] rounded-lg text-xs text-zinc-100 placeholder-[#6e6e78] focus:outline-none focus:border-white/30 transition-colors font-sans"
               />
             </div>
 
@@ -154,7 +154,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-[#0e0e13] border border-white/[0.08] hover:border-white/20 text-xs font-mono text-[#8c8c96] hover:text-white transition-colors"
+                className="w-full sm:w-auto h-10 flex items-center justify-center gap-2 px-3.5 rounded-lg bg-[#0e0e13] border border-white/[0.08] hover:border-white/20 text-xs font-mono text-[#8c8c96] hover:text-white transition-colors"
                 title="Cambiar orden de fecha"
               >
                 <Calendar className="w-3.5 h-3.5 text-zinc-400" />

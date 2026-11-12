@@ -38,6 +38,7 @@ export function ArtworkModal({ isOpen, onClose, imageUrl, title }: ArtworkModalP
             src={imageUrl}
             alt={title}
             fill
+            unoptimized={imageUrl.startsWith('data:')}
             sizes="100vw"
             className="object-contain"
           />

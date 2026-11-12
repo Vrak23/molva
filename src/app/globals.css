@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,23 +19,18 @@
   --muted-dark: #585862;
 }
 
-body, button, input, textarea, select {
+body {
   color: var(--foreground);
   background-color: var(--background);
-  font-family: 'Roboto Condensed', var(--font-roboto-condensed), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow-x: hidden;
   min-height: 100vh;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
 }
 
-h1, h2, h3, h4, h5, h6, p, a {
-  font-family: 'Roboto Condensed', var(--font-roboto-condensed), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.font-mono, [class*="font-mono"] {
-  font-family: var(--font-geist-mono), monospace !important;
+*, *::before, *::after {
+  font-family: 'Roboto Condensed', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
 /* Scrollbar Minimalista Estilo Tidal */

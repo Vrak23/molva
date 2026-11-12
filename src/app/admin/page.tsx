@@ -422,7 +422,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-4">
           <div className="relative w-12 h-12 rounded-full overflow-hidden bg-black border border-white/20 flex-shrink-0 flex items-center justify-center">
             {userProfile.avatarUrl ? (
-              <Image src={userProfile.avatarUrl} alt="Avatar" fill className="object-cover" />
+              <Image src={userProfile.avatarUrl} alt="Avatar" fill unoptimized className="object-cover" />
             ) : (
               <User className="w-6 h-6 text-[#70707a]" />
             )}
@@ -605,7 +605,7 @@ export default function AdminPage() {
                 {/* Portada Preview */}
                 <div className="relative aspect-square w-40 sm:w-48 rounded-xl overflow-hidden bg-[#060608] border border-white/[0.12] flex-shrink-0 flex items-center justify-center shadow-2xl">
                   {editingPlaylist.cover_url ? (
-                    <Image src={editingPlaylist.cover_url} alt="Portada" fill className="object-cover" />
+                    <Image src={editingPlaylist.cover_url} alt="Portada" fill unoptimized className="object-cover" />
                   ) : (
                     <Disc className="w-12 h-12 text-[#3a3a44]" />
                   )}
@@ -870,7 +870,7 @@ export default function AdminPage() {
                       {/* Portada Mini */}
                       <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-black border border-white/10 flex-shrink-0 flex items-center justify-center">
                         {playlist.cover_url ? (
-                          <Image src={playlist.cover_url} alt="Cover" fill className="object-cover" />
+                          <Image src={playlist.cover_url} alt="Cover" fill unoptimized className="object-cover" />
                         ) : (
                           <Disc className="w-8 h-8 text-[#454550]" />
                         )}
@@ -977,7 +977,7 @@ export default function AdminPage() {
               <div className="flex items-center gap-5">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden bg-black border border-white/20 flex-shrink-0 flex items-center justify-center">
                   {userProfile.avatarUrl ? (
-                    <Image src={userProfile.avatarUrl} alt="Avatar" fill className="object-cover" />
+                    <Image src={userProfile.avatarUrl} alt="Avatar" fill unoptimized className="object-cover" />
                   ) : (
                     <User className="w-7 h-7 text-[#50505a]" />
                   )}

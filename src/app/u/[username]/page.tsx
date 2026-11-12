@@ -99,6 +99,7 @@ export default function UserProfilePage({
                 alt={profile.displayName || profile.username}
                 fill
                 priority
+                unoptimized={profile.avatarUrl.startsWith('data:')}
                 className="object-cover"
               />
             ) : (

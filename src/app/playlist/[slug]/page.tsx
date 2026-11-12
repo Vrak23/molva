@@ -170,6 +170,7 @@ export default function PlaylistDetailPage({
                 alt={playlist.title}
                 fill
                 priority
+                unoptimized={playlist.cover_url.startsWith('data:')}
                 sizes="(max-width: 768px) 240px, 288px"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
               />
