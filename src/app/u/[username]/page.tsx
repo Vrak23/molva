@@ -1,23 +1,20 @@
 'use client';
 
-import React, { useEffect, useState, use } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { Playlist, UserProfile } from '@/types';
 import { getPlaylistsByCreator, getUserProfile } from '@/lib/supabase';
 import { PlaylistCard } from '@/components/PlaylistCard';
 import { User, ExternalLink, ArrowLeft, Settings, ChevronUp, Sparkles, Disc } from 'lucide-react';
 
-export default function UserProfilePage({
-  params,
-}: {
-  params: Promise<{ username: string }>;
-}) {
+export default function UserProfilePage() {
   const router = useRouter();
-  const resolvedParams = use(params);
-  const username = decodeURIComponent(resolvedParams.username);
+  const routeParams = useParams();
+  const rawUsername = (routeParams?.username as string) || '';
+  const username = decodeURIComponent(rawUsername);
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);

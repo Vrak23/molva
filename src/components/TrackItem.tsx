@@ -58,15 +58,15 @@ export function TrackItem({ track, index }: TrackItemProps) {
         </div>
 
         {/* Métricas: Streams de Tune Tracker, Duración y Botón de Notas */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
           {/* Streams de Tune Tracker */}
           {track.plays !== undefined && track.plays > 0 && (
             <div 
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0a0a0e] border border-white/[0.08] text-[10px] sm:text-[11px] font-mono text-zinc-300 group-hover:border-cyan-500/30 transition-colors"
+              className="flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-[#0a0a0e] border border-white/[0.08] text-[10px] sm:text-[11px] font-mono text-zinc-300 group-hover:border-cyan-500/30 transition-colors"
               title={`${track.plays} reproducciones en Tune Tracker`}
             >
               <Play className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400" />
-              <span className="tabular-nums">{track.plays.toLocaleString('es-ES')} <span className="hidden xs:inline">streams</span></span>
+              <span className="tabular-nums font-semibold">{track.plays.toLocaleString('es-ES')}</span>
             </div>
           )}
 
@@ -81,15 +81,15 @@ export function TrackItem({ track, index }: TrackItemProps) {
           {hasNotes && (
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono uppercase px-2.5 py-1 rounded-md bg-[#181820] border border-white/[0.08] text-[#90909c] hover:text-white hover:border-white/20 transition-all"
+              className="flex items-center gap-1 text-[10px] sm:text-[11px] font-mono uppercase px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-[#181820] border border-white/[0.08] text-[#90909c] hover:text-white hover:border-white/20 transition-all"
               title="Leer nota de curaduría"
             >
               <FileText className="w-3 h-3 text-cyan-400" />
-              <span className="hidden xs:inline">Nota</span>
+              <span className="hidden sm:inline">Nota</span>
               {isOpen ? (
-                <ChevronUp className="w-3 h-3 ml-0.5 text-zinc-400" />
+                <ChevronUp className="w-3 h-3 text-zinc-400" />
               ) : (
-                <ChevronDown className="w-3 h-3 ml-0.5 text-zinc-400" />
+                <ChevronDown className="w-3 h-3 text-zinc-400" />
               )}
             </button>
           )}

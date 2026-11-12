@@ -399,51 +399,52 @@ export default function AdminPage() {
       )}
 
       {/* Barra de Retroceso y Navegación del Estudio */}
-      <div className="flex items-center justify-between pb-2">
+      <div className="flex items-center justify-between gap-2 pb-2">
         <button
           onClick={() => router.push('/')}
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-colors bg-[#0e0e13] border border-white/[0.08] px-4 py-2 rounded-full hover:border-white/20 shadow-md"
+          className="h-9 px-3 sm:px-4 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-colors bg-[#0e0e13] border border-white/[0.08] rounded-full hover:border-white/20 shadow-md flex-shrink-0"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Volver al Catálogo</span>
+          <span>Volver<span className="hidden sm:inline"> al Catálogo</span></span>
         </button>
 
         <Link
           href={`/u/${userProfile.username}`}
-          className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-colors"
+          className="h-9 px-3 sm:px-4 inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-colors bg-[#0e0e13] border border-white/[0.08] rounded-full hover:border-white/20 shadow-md flex-shrink-0"
         >
-          <span>Ver mi Perfil Público</span>
-          <ExternalLink className="w-3 h-3 text-[#6e6e78]" />
+          <Eye className="w-3.5 h-3.5 text-zinc-400" />
+          <span><span className="hidden sm:inline">Ver </span>Mi Perfil</span>
+          <ExternalLink className="w-3 h-3 text-zinc-500" />
         </Link>
       </div>
 
       {/* Cabecera del Estudio */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
-        <div className="flex items-center gap-4">
-          <div className="relative w-12 h-12 rounded-full overflow-hidden bg-black border border-white/20 flex-shrink-0 flex items-center justify-center">
+        <div className="flex items-center gap-3.5">
+          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-black border border-white/20 flex-shrink-0 flex items-center justify-center">
             {userProfile.avatarUrl ? (
               <Image src={userProfile.avatarUrl} alt="Avatar" fill unoptimized className="object-cover" />
             ) : (
-              <User className="w-6 h-6 text-[#70707a]" />
+              <User className="w-5 h-5 text-[#70707a]" />
             )}
           </div>
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#8c8c96] mb-0.5">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(0,240,255,0.7)]"></span>
-              <span>Conectado a Base de Datos Supabase (Tune Tracker)</span>
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-widest text-[#8c8c96] mb-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_rgba(0,240,255,0.7)] flex-shrink-0"></span>
+              <span className="truncate">Conectado a Supabase</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-sans">
+            <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white font-sans">
               Estudio de Personalización
             </h1>
           </div>
         </div>
 
         {/* Selector de Pestañas y Acciones */}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-[#0d0d12] border border-white/[0.08] rounded-full p-1">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
+          <div className="flex flex-1 sm:flex-initial bg-[#0d0d12] border border-white/[0.08] rounded-full p-1">
             <button
               onClick={() => { setAdminTab('playlists'); setIsFormOpen(false); }}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
                 adminTab === 'playlists' ? 'bg-white text-black font-semibold shadow-md' : 'text-[#8c8c96] hover:text-white'
               }`}
             >
@@ -452,7 +453,7 @@ export default function AdminPage() {
             </button>
             <button
               onClick={() => { setAdminTab('profile'); setIsFormOpen(false); }}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
                 adminTab === 'profile' ? 'bg-white text-black font-semibold shadow-md' : 'text-[#8c8c96] hover:text-white'
               }`}
             >
@@ -463,7 +464,7 @@ export default function AdminPage() {
 
           <button
             onClick={handleLogout}
-            className="p-2 rounded-full bg-[#0d0d12] border border-white/[0.08] text-[#8c8c96] hover:text-red-400 hover:border-red-400/40 transition-colors"
+            className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full bg-[#0d0d12] border border-white/[0.08] text-[#8c8c96] hover:text-red-400 hover:border-red-400/40 transition-colors"
             title="Cerrar Sesión"
           >
             <LogOut className="w-4 h-4" />
@@ -475,29 +476,29 @@ export default function AdminPage() {
       {/* FORMULARIO DE PERSONALIZACIÓN DE PLAYLIST */}
       {/* ======================================================== */}
       {isFormOpen && editingPlaylist && (
-        <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-6 sm:p-8 space-y-8 shadow-2xl animate-fadeIn">
+        <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-4 sm:p-7 space-y-6 sm:space-y-8 shadow-2xl animate-fadeIn">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-white/[0.08] gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400 mb-1 font-semibold">
-                <Edit3 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Personalizando Selección de Tune Tracker</span>
+                <Edit3 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <span className="truncate">Personalizando Selección</span>
                 {editingPlaylist.period_str && (
                   <>
-                    <span className="text-zinc-600">•</span>
-                    <span className="text-zinc-300 font-semibold">{editingPlaylist.period_str}</span>
+                    <span className="text-zinc-600 hidden xs:inline">•</span>
+                    <span className="text-zinc-300 font-semibold hidden xs:inline">{editingPlaylist.period_str}</span>
                   </>
                 )}
               </div>
-              <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white font-sans">
+              <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white font-sans">
                 {editingPlaylist.title}
               </h2>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
-                className="px-4 py-2 rounded-full border border-white/[0.08] bg-[#16161d] text-[#8c8c96] hover:text-white text-xs font-mono uppercase tracking-wider transition-colors"
+                className="w-full sm:w-auto h-9 px-4 rounded-xl sm:rounded-full border border-white/[0.08] bg-[#16161d] text-[#8c8c96] hover:text-white text-xs font-mono uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
               >
                 Cerrar
               </button>
@@ -612,7 +613,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="space-y-4 flex-1 w-full">
-                  <div className="flex items-center gap-3">
+                  <div className="space-y-2">
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -620,23 +621,28 @@ export default function AdminPage() {
                       accept="image/*"
                       className="hidden"
                     />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2.5 rounded-full bg-white text-black font-semibold text-xs font-mono transition-all flex items-center gap-2 shadow-[0_0_12px_rgba(255,255,255,0.2)] hover:bg-zinc-200"
-                    >
-                      <UploadCloud className="w-4 h-4" />
-                      <span>Subir Portada (Auto-comprimir & Extraer Color)</span>
-                    </button>
-                    {editingPlaylist.cover_url && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
                       <button
                         type="button"
-                        onClick={() => setEditingPlaylist({ ...editingPlaylist, cover_url: '', dominant_color: '#262626' })}
-                        className="px-3.5 py-2.5 rounded-full bg-[#181820] border border-white/[0.08] text-xs font-mono text-[#8c8c96] hover:text-red-400"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-10 px-4 rounded-xl sm:rounded-full bg-white text-black font-semibold text-xs font-mono transition-all flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(255,255,255,0.2)] hover:bg-zinc-200"
                       >
-                        Quitar
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Subir Portada</span>
                       </button>
-                    )}
+                      {editingPlaylist.cover_url && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingPlaylist({ ...editingPlaylist, cover_url: '', dominant_color: '#262626' })}
+                          className="h-10 px-4 rounded-xl sm:rounded-full bg-[#181820] border border-white/[0.08] text-xs font-mono text-[#8c8c96] hover:text-red-400 flex items-center justify-center"
+                        >
+                          Quitar
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#70707a] font-sans">
+                      Comprime automáticamente la imagen y extrae el resplandor ambiental.
+                    </p>
                   </div>
 
                   <div>
@@ -769,22 +775,23 @@ export default function AdminPage() {
                       key={track.id || idx}
                       className="p-4 rounded-xl bg-[#060608] border border-white/[0.08] space-y-2.5 hover:border-white/20 transition-colors"
                     >
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-3">
-                          <span className="font-mono text-xs text-[#6e6e78] w-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                          <span className="font-mono text-xs text-[#6e6e78] w-5 pt-0.5 flex-shrink-0">
                             {String(idx + 1).padStart(2, '0')}
                           </span>
-                          <div>
-                            <span className="text-xs font-semibold text-white">{track.title}</span>
-                            <span className="text-xs text-[#8c8c96] ml-2">por {track.artist}</span>
-                            {track.album && <span className="text-xs text-[#50505a] ml-2 font-mono">• {track.album}</span>}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-white truncate">{track.title}</p>
+                            <p className="text-[11px] text-[#8c8c96] truncate">
+                              {track.artist} {track.album && `• ${track.album}`}
+                            </p>
                           </div>
                         </div>
 
                         {track.plays !== undefined && track.plays > 0 && (
-                          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121217] border border-white/[0.08] text-[11px] font-mono text-zinc-300">
+                          <div className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#121217] border border-white/[0.08] text-[10px] font-mono text-zinc-300">
                             <Play className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400" />
-                            <span>{track.plays} streams</span>
+                            <span>{track.plays}</span>
                           </div>
                         )}
                       </div>
@@ -809,17 +816,17 @@ export default function AdminPage() {
             </div>
 
             {/* Botón de Guardado */}
-            <div className="pt-6 border-t border-white/[0.08] flex items-center justify-end gap-3">
+            <div className="pt-6 border-t border-white/[0.08] flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 w-full">
               <button
                 type="button"
                 onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
-                className="px-5 py-2.5 rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono uppercase text-[#8c8c96] hover:text-white transition-colors"
+                className="h-11 sm:h-10 px-5 rounded-xl sm:rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono uppercase text-[#8c8c96] hover:text-white transition-colors flex items-center justify-center"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-[0_0_16px_rgba(255,255,255,0.25)]"
+                className="h-11 sm:h-10 px-6 rounded-xl sm:rounded-full bg-white text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(255,255,255,0.25)]"
               >
                 <Save className="w-4 h-4" />
                 <span>Guardar Personalización</span>
@@ -915,10 +922,10 @@ export default function AdminPage() {
                     </div>
 
                     {/* Botones de Acción */}
-                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-white/[0.06]">
                       <Link
                         href={`/playlist/${playlist.slug}`}
-                        className="px-4 py-2 rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono text-[#8c8c96] hover:text-white transition-colors flex items-center gap-1.5"
+                        className="h-10 px-4 rounded-xl sm:rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono text-[#8c8c96] hover:text-white transition-colors flex items-center justify-center gap-1.5"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Ver Vista Pública</span>
@@ -926,7 +933,7 @@ export default function AdminPage() {
 
                       <button
                         onClick={() => handleEdit(playlist)}
-                        className="px-5 py-2 rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(255,255,255,0.2)]"
+                        className="h-10 px-5 rounded-xl sm:rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(255,255,255,0.2)]"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                         <span>Editar Personalización</span>
@@ -1088,7 +1095,7 @@ export default function AdminPage() {
             <div className="pt-4 border-t border-white/[0.08] flex justify-end">
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center gap-2 shadow-[0_0_12px_rgba(255,255,255,0.2)]"
+                className="w-full sm:w-auto h-11 sm:h-10 px-6 rounded-xl sm:rounded-full bg-white text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(255,255,255,0.2)]"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>Guardar Cambios</span>
