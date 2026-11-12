@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://znbihwazambtwjwizmsn.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_C7JjbD4TMFzBGysYO835GQ_s1rRzvm-';
+const DEFAULT_SUPABASE_URL = 'https://znbihwazambtwjwizmsn.supabase.co';
+const DEFAULT_ANON_KEY = 'sb_publishable_C7JjbD4TMFzBGysYO835GQ_s1rRzvm-';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+function getSupabase() {
+  const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/^["']|["']$/g, '');
+  const envKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim().replace(/^["']|["']$/g, '');
+
+  const url = (envUrl && envUrl.startsWith('https://')) ? envUrl : DEFAULT_SUPABASE_URL;
+  const key = (envKey && (envKey.startsWith('sb_publishable_') || envKey.startsWith('eyJ')))
+    ? envKey
+    : DEFAULT_ANON_KEY;
+
+  return createClient(url, key);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,14 +30,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    let supabase = getSupabase();
 
     // Obtener la fila correspondiente en spotitracker_curator
-    const { data: existingRow, error: fetchErr } = await supabase
+    let { data: existingRow, error: fetchErr } = await supabase
       .from('spotitracker_curator')
       .select('*')
       .eq('id', playlist.id)
       .single();
+
+    // Reintento con clave verificada si la de Vercel falló
+    if (fetchErr && (fetchErr.message.includes('Invalid API key') || fetchErr.code === 'PGRST301')) {
+      console.warn('Clave de Supabase en Vercel inválida, aplicando clave de respaldo garantizada.');
+      supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_ANON_KEY);
+      const retry = await supabase
+        .from('spotitracker_curator')
+        .select('*')
+        .eq('id', playlist.id)
+        .single();
+      existingRow = retry.data;
+      fetchErr = retry.error;
+    }
 
     if (fetchErr && fetchErr.code !== 'PGRST116') {
       console.warn('Advertencia al consultar fila existente en spotitracker_curator:', fetchErr);
@@ -82,7 +107,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const { error: updError } = await supabase
+    let { error: updError } = await supabase
       .from('spotitracker_curator')
       .update({
         settings: updatedSettings,
@@ -90,6 +115,19 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', playlist.id);
+
+    if (updError && updError.message.includes('Invalid API key')) {
+      supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_ANON_KEY);
+      const retryUpd = await supabase
+        .from('spotitracker_curator')
+        .update({
+          settings: updatedSettings,
+          selected_tracks: updatedTracks,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', playlist.id);
+      updError = retryUpd.error;
+    }
 
     if (updError) {
       console.error('Error actualizando spotitracker_curator en Supabase:', updError);

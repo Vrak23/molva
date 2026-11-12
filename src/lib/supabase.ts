@@ -3,8 +3,16 @@ import { Playlist, Track, UserProfile } from '@/types';
 import { INITIAL_MOCK_PLAYLISTS } from './mock-data';
 import { getLocalPlaylists, saveLocalPlaylist, deleteLocalPlaylist } from './local-storage-db';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://znbihwazambtwjwizmsn.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_C7JjbD4TMFzBGysYO835GQ_s1rRzvm-';
+const DEFAULT_SUPABASE_URL = 'https://znbihwazambtwjwizmsn.supabase.co';
+const DEFAULT_ANON_KEY = 'sb_publishable_C7JjbD4TMFzBGysYO835GQ_s1rRzvm-';
+
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/^["']|["']$/g, '');
+const rawKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim().replace(/^["']|["']$/g, '');
+
+const supabaseUrl = (rawUrl && rawUrl.startsWith('https://')) ? rawUrl : DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = (rawKey && (rawKey.startsWith('sb_publishable_') || rawKey.startsWith('eyJ')))
+  ? rawKey
+  : DEFAULT_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
