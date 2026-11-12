@@ -110,8 +110,32 @@ export async function getPlaylists(): Promise<Playlist[]> {
         localCustomizations = JSON.parse(rawLocal);
       }
     } catch {}
+
+    // 1. En el navegador, consultar prioritariamente a través de /api/playlists con no-cache
+    try {
+      const res = await fetch('/api/playlists', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.rows) && json.rows.length > 0) {
+          return json.rows.map((row: any) => {
+            const custom = localCustomizations[row.id] || localCustomizations[row.settings?.playlist_name] || {};
+            return mapCuratorRowToPlaylist(row, custom);
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Fallo al obtener playlists mediante /api/playlists, usando cliente directo:', e);
+    }
   }
 
+  // 2. Consulta directa a Supabase (SSR o fallback)
   if (supabase) {
     try {
       const { data: rows, error } = await supabase
@@ -131,7 +155,7 @@ export async function getPlaylists(): Promise<Playlist[]> {
     }
   }
 
-  // Fallback a almacenamiento local IndexedDB
+  // 3. Fallback a almacenamiento local IndexedDB
   if (typeof window !== 'undefined') {
     const local = await getLocalPlaylists();
     if (local && local.length > 0) {
@@ -164,52 +188,48 @@ export async function getPlaylistBySlug(slug: string): Promise<Playlist | null> 
 
 // Guardar o actualizar la personalización de la playlist
 export async function savePlaylist(playlist: Playlist): Promise<{ success: boolean; error?: string }> {
-  // 1. Guardar mapa de personalizaciones local en localStorage / IndexedDB
+  // 1. Si estamos en el navegador, guardar siempre a través de /api/playlist/save para garantizar persistencia en la nube
   if (typeof window !== 'undefined') {
     try {
-      const rawMap = localStorage.getItem('molva_customizations_map') || '{}';
-      const map = JSON.parse(rawMap);
-      
-      const trackNotesMap: Record<string, string> = {};
-      if (playlist.tracks) {
-        playlist.tracks.forEach(t => {
-          if (t.notes) {
-            trackNotesMap[t.id] = t.notes;
-          }
-        });
+      const res = await fetch('/api/playlist/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(playlist),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return {
+          success: false,
+          error: data.error || 'No se pudo sincronizar la personalización en Supabase.',
+        };
       }
 
-      map[playlist.id] = {
-        title: playlist.title,
-        slug: playlist.slug,
-        description: playlist.description,
-        story: playlist.story,
-        cover_url: playlist.cover_url,
-        dominant_color: playlist.dominant_color,
-        release_date: playlist.release_date,
-        release_type: playlist.release_type,
-        catalog_number: playlist.catalog_number,
-        upcoming_album: playlist.upcoming_album,
-        spotify_url: playlist.spotify_url,
-        youtube_url: playlist.youtube_url,
-        tags: playlist.tags,
-        creator_name: playlist.creator_name,
-        creator_avatar: playlist.creator_avatar,
-        trackNotes: trackNotesMap,
-        updated_at: new Date().toISOString()
+      // Al guardarse con éxito en la nube, actualizar también copia local
+      try {
+        const rawMap = localStorage.getItem('molva_customizations_map') || '{}';
+        const map = JSON.parse(rawMap);
+        map[playlist.id] = {
+          ...playlist,
+          synced_at: new Date().toISOString(),
+        };
+        localStorage.setItem('molva_customizations_map', JSON.stringify(map));
+        await saveLocalPlaylist(playlist);
+      } catch {}
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error de red al invocar /api/playlist/save:', err);
+      return {
+        success: false,
+        error: 'Error de conexión con el servidor al guardar la playlist. Por favor verifica tu conexión.',
       };
-      
-      localStorage.setItem('molva_customizations_map', JSON.stringify(map));
-      await saveLocalPlaylist(playlist);
-    } catch (e) {
-      console.warn('Error guardando en almacenamiento local:', e);
     }
   }
 
-  // 2. Persistir directamente en Supabase (spotitracker_curator)
+  // 2. Persistencia directa en Supabase si se llama en Node / SSR
   if (supabase) {
     try {
-      // Obtener el registro actual para no pisar campos existentes de Tune Tracker
       const { data: existingRow } = await supabase
         .from('spotitracker_curator')
         .select('*')
@@ -243,18 +263,18 @@ export async function savePlaylist(playlist: Playlist): Promise<{ success: boole
           tags: playlist.tags,
           creator_name: playlist.creator_name,
           creator_avatar: playlist.creator_avatar,
-          trackNotes: trackNotesMap
-        }
+          trackNotes: trackNotesMap,
+          synced_at: new Date().toISOString(),
+        },
       };
 
-      // Si hay pistas existentes en Tune Tracker, enriquecerlas con las notas
       let updatedTracks = existingRow?.selected_tracks || [];
       if (Array.isArray(updatedTracks) && updatedTracks.length > 0 && playlist.tracks) {
         updatedTracks = updatedTracks.map((rawT: any, idx: number) => {
           const editedT = playlist.tracks?.find(pt => pt.title === (rawT.name || rawT.title) && pt.artist === rawT.artist) || playlist.tracks?.[idx];
           return {
             ...rawT,
-            notes: editedT?.notes || rawT.notes || ''
+            notes: editedT?.notes || rawT.notes || '',
           };
         });
       }
@@ -264,20 +284,19 @@ export async function savePlaylist(playlist: Playlist): Promise<{ success: boole
         .update({
           settings: updatedSettings,
           selected_tracks: updatedTracks,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', playlist.id);
 
       if (updError) {
-        console.warn('Error al actualizar en Supabase:', updError);
-        // Aun si falla la red con Supabase, devolvemos success si se guardó localmente
-        return { success: true };
+        console.error('Error al actualizar en Supabase:', updError);
+        return { success: false, error: updError.message };
       }
 
       return { success: true };
     } catch (err: any) {
-      console.warn('Excepción guardando en Supabase:', err);
-      return { success: true };
+      console.error('Excepción guardando en Supabase:', err);
+      return { success: false, error: err.message };
     }
   }
 

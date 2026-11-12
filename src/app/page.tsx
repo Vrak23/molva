@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Playlist } from '@/types';
-import { getPlaylists } from '@/lib/supabase';
+import { getPlaylists, savePlaylist } from '@/lib/supabase';
 import { PlaylistCard } from '@/components/PlaylistCard';
 import { Search, Settings, ArrowUpDown, Calendar, RefreshCw } from 'lucide-react';
 
@@ -19,6 +19,30 @@ export default function HomePage() {
     try {
       const data = await getPlaylists();
       setPlaylists(data);
+
+      // Auto-sincronizar personalizaciones pendientes guardadas en este dispositivo hacia Supabase
+      if (typeof window !== 'undefined' && data && data.length > 0) {
+        try {
+          const rawLocal = localStorage.getItem('molva_customizations_map');
+          if (rawLocal) {
+            const map = JSON.parse(rawLocal);
+            const target = data[0];
+            const localCustom = map[target.id] || map[target.title];
+            if (localCustom && !localCustom.synced_at) {
+              const toSync: Playlist = {
+                ...target,
+                ...localCustom,
+                id: target.id
+              };
+              savePlaylist(toSync).then((res) => {
+                if (res.success) {
+                  getPlaylists().then(setPlaylists);
+                }
+              });
+            }
+          }
+        } catch {}
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);

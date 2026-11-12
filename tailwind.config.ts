@@ -20,7 +20,7 @@ const config: Config = {
       },
       fontFamily: {
         mono: ["var(--font-geist-mono)", "monospace"],
-        sans: ["var(--font-geist-sans)", "sans-serif"],
+        sans: ["var(--font-roboto-condensed)", "var(--font-geist-sans)", "sans-serif"],
         serif: ["var(--font-serif)", "serif"],
       },
     },

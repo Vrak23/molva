@@ -107,6 +107,31 @@ export default function AdminPage() {
     try {
       const data = await getPlaylists();
       setPlaylists(data);
+
+      // Si este dispositivo tiene cambios locales pendientes, sincronizarlos automáticamente
+      if (typeof window !== 'undefined' && data && data.length > 0) {
+        try {
+          const rawLocal = localStorage.getItem('molva_customizations_map');
+          if (rawLocal) {
+            const map = JSON.parse(rawLocal);
+            const target = data[0];
+            const localCustom = map[target.id] || map[target.title];
+            if (localCustom && !localCustom.synced_at) {
+              const toSync: Playlist = {
+                ...target,
+                ...localCustom,
+                id: target.id,
+              };
+              const res = await savePlaylist(toSync);
+              if (res.success) {
+                showNotification('✨ Cambios locales de este dispositivo sincronizados con la nube.');
+                const refreshed = await getPlaylists();
+                setPlaylists(refreshed);
+              }
+            }
+          }
+        } catch {}
+      }
     } finally {
       setSyncing(false);
     }

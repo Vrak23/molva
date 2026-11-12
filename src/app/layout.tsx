@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
+import { Roboto_Condensed } from 'next/font/google';
 import { ArrowUpRight } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import './globals.css';
 
+const robotoCondensed = Roboto_Condensed({
+  subsets: ['latin'],
+  variable: '--font-roboto-condensed',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
-  title: 'Molva — Visualizador & Repositorio de Playlists • Tune Tracker',
-  description: 'Colección discográfica y repositorio sonoro de playlists curadas en Tune Tracker.',
+  title: 'Molva',
+  description: 'Visualizador y repositorio discográfico de playlists curadas en Tune Tracker.',
 };
 
 export default function RootLayout({
@@ -14,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark scroll-smooth">
-      <body className="bg-[#060608] text-[#ffffff] flex flex-col min-h-screen selection:bg-white selection:text-black antialiased font-sans">
+    <html lang="es" className={`dark scroll-smooth ${robotoCondensed.variable}`}>
+      <body className={`${robotoCondensed.className} bg-[#060608] text-[#ffffff] flex flex-col min-h-screen selection:bg-white selection:text-black antialiased font-sans`}>
         {/* Barra de Navegación Tidal */}
         <Navbar />
 
