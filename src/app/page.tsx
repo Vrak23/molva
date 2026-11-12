@@ -2,37 +2,45 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Playlist, UserProfile } from '@/types';
+import { Playlist } from '@/types';
 import { getPlaylists } from '@/lib/supabase';
 import { PlaylistCard } from '@/components/PlaylistCard';
-import { Search, Disc3, Plus, Layers, ArrowUpDown, Calendar } from 'lucide-react';
+import { Search, Disc3, Settings, Layers, ArrowUpDown, Calendar, RefreshCw } from 'lucide-react';
 
 export default function HomePage() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFormat, setSelectedFormat] = useState<string>('ALL');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // 'desc': más reciente primero
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadData = async () => {
+    try {
+      const data = await getPlaylists();
+      setPlaylists(data);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getPlaylists();
-        setPlaylists(data);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
   }, []);
 
-  // Filtrado y Ordenamiento estricto por Fecha de Creación / Lanzamiento
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+  };
+
+  // Filtrado y Ordenamiento
   const processedPlaylists = useMemo(() => {
     let result = [...playlists];
 
-    // 1. Filtrado por formato (LP, EP, Single, etc.)
+    // 1. Filtrado por formato
     if (selectedFormat !== 'ALL') {
-      result = result.filter(p => (p.release_type || 'LP') === selectedFormat);
+      result = result.filter(p => (p.release_type || 'Semestral') === selectedFormat);
     }
 
     // 2. Filtrado por búsqueda
@@ -42,18 +50,20 @@ export default function HomePage() {
         return (
           playlist.title.toLowerCase().includes(q) ||
           playlist.creator_username.toLowerCase().includes(q) ||
-          (playlist.creator_name && playlist.creator_name.toLowerCase().includes(q)) ||
-          (playlist.upcoming_album && playlist.upcoming_album.toLowerCase().includes(q)) ||
+          (playlist.period_str && playlist.period_str.toLowerCase().includes(q)) ||
+          (playlist.cycle_year && playlist.cycle_year.toLowerCase().includes(q)) ||
           (playlist.description && playlist.description.toLowerCase().includes(q)) ||
+          (playlist.tags && playlist.tags.some(t => t.toLowerCase().includes(q))) ||
           (playlist.tracks && playlist.tracks.some(t => 
             t.title.toLowerCase().includes(q) ||
-            t.artist.toLowerCase().includes(q)
+            t.artist.toLowerCase().includes(q) ||
+            (t.album && t.album.toLowerCase().includes(q))
           ))
         );
       });
     }
 
-    // 3. Ordenamiento por fecha de creación/lanzamiento
+    // 3. Ordenamiento por fecha de lanzamiento
     result.sort((a, b) => {
       const dateA = new Date(a.release_date || a.created_at).getTime();
       const dateB = new Date(b.release_date || b.created_at).getTime();
@@ -63,36 +73,50 @@ export default function HomePage() {
     return result;
   }, [playlists, selectedFormat, searchQuery, sortOrder]);
 
+  const totalTracks = useMemo(() => {
+    return playlists.reduce((acc, p) => acc + (p.tracks?.length || 0), 0);
+  }, [playlists]);
+
   return (
     <div className="space-y-10">
-      {/* Portada / Hero de la Plataforma */}
+      {/* Portada / Hero del Visualizador */}
       <section className="pt-2 pb-6 border-b border-zinc-800/60">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-6">
           <div>
             <div className="flex items-center gap-2 text-[11px] sm:text-xs font-mono uppercase tracking-widest text-zinc-500 mb-2">
               <Disc3 className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Biblioteca Abierta de Curaduría & Lanzamientos</span>
+              <span>Archivo & Visualizador de Curadurías • Tune Tracker</span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light tracking-tight text-white font-sans">
-              Explorar <span className="font-semibold text-zinc-100">Playlists & Álbumes</span>
+              Colección de <span className="font-semibold text-zinc-100">Playlists & Lanzamientos</span>
             </h1>
-            <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed">
-              Descubre curadurías musicales concebidas como lanzamientos discográficos: con fecha de estreno, fichas técnicas y notas canción por canción publicadas por la comunidad.
+            <p className="mt-2 text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed font-sans">
+              Visualización discográfica de las playlists semestrales creadas en Tune Tracker. Cada entrega cuenta con ficha técnica, memoria conceptual y conteo de streams por canción.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors"
+              title="Recargar playlists desde la base de datos"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Sincronizar</span>
+            </button>
+
             <Link
               href="/admin"
               className="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Lanzar Playlist</span>
+              <Settings className="w-3.5 h-3.5" />
+              <span>Estudio de Curaduría</span>
             </Link>
 
             <div className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-zinc-500" />
-              <span>{playlists.length} {playlists.length === 1 ? 'lanzamiento' : 'lanzamientos'}</span>
+              <span>{playlists.length} {playlists.length === 1 ? 'lanzamiento' : 'lanzamientos'} ({totalTracks} temas)</span>
             </div>
           </div>
         </div>
@@ -106,7 +130,7 @@ export default function HomePage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
               <input
                 type="text"
-                placeholder="Buscar por título, adelanto, curador (@usuario), artista..."
+                placeholder="Buscar por título, artista, canción, periodo o etiqueta..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-[#121215] border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 transition-colors font-sans"
@@ -126,14 +150,14 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Filtros de Formato (Todos, LP, EP, Singles, etc.) con scroll horizontal suave */}
+          {/* Filtros de Formato */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs font-mono">
             {[
-              { id: 'ALL', label: 'Todos los formatos' },
+              { id: 'ALL', label: 'Todos los lanzamientos' },
+              { id: 'Semestral', label: 'Semestrales Tune Tracker' },
               { id: 'LP', label: 'Álbumes (LP)' },
               { id: 'EP', label: 'EPs' },
-              { id: 'Single', label: 'Singles / Adelantos' },
-              { id: 'Mixtape', label: 'Mixtapes' },
+              { id: 'Compilación', label: 'Compilaciones' },
             ].map((fmt) => (
               <button
                 key={fmt.id}
@@ -172,20 +196,11 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="font-mono text-sm text-zinc-300 uppercase tracking-wider">
-                La biblioteca está vacía
+                No hay playlists registradas en Tune Tracker
               </h3>
               <p className="mt-1 text-xs text-zinc-500 max-w-sm mx-auto">
-                Inicia sesión o regístrate para publicar el primer lanzamiento con fecha y notas de curaduría.
+                Guarda una selección desde el Curador de Playlists en Tune Tracker para verla reflejada aquí automáticamente.
               </p>
-            </div>
-            <div className="pt-2">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Publicar Primer Lanzamiento</span>
-              </Link>
             </div>
           </div>
         ) : (

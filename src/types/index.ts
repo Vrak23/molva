@@ -1,4 +1,4 @@
-export type ReleaseType = 'LP' | 'EP' | 'Single' | 'Mixtape' | 'Compilación' | 'Sesión';
+export type ReleaseType = 'Semestral' | 'LP' | 'EP' | 'Single' | 'Mixtape' | 'Compilación' | 'Sesión';
 
 export interface Track {
   id: string;
@@ -6,8 +6,11 @@ export interface Track {
   position: number;
   title: string;
   artist: string;
+  album?: string;
   duration_ms?: number;
   notes?: string;
+  plays?: number; // Streams acumulados en Tune Tracker
+  uri?: string;
   spotify_track_id?: string;
   youtube_video_id?: string;
 }
@@ -17,20 +20,26 @@ export interface Playlist {
   slug: string;
   title: string;
   description?: string;
-  story?: string; // Liner notes / Historia del lanzamiento
+  story?: string; // Liner notes / Memoria conceptual del lanzamiento
   cover_url?: string;
   dominant_color?: string;
   spotify_url?: string;
   youtube_url?: string;
   tags?: string[];
   
-  // Metadatos de Lanzamiento tipo Álbum / Single
+  // Metadatos de Lanzamiento tipo Álbum / Semestral
   release_date: string; // Fecha de creación / lanzamiento (YYYY-MM-DD o ISO)
   release_type: ReleaseType;
   catalog_number?: string;
-  upcoming_album?: string; // Título de la próxima playlist / álbum al que pertenecerá si es un Single/Adelanto
+  upcoming_album?: string;
   
-  // Metadatos del Creador / Perfil
+  // Metadatos específicos de ciclo de Tune Tracker
+  cycle_year?: string;
+  cycle_half?: string;
+  period_str?: string;
+  target_count?: number;
+  
+  // Metadatos del Creador / Curador (Vrak23)
   creator_id?: string;
   creator_username: string;
   creator_name?: string;
@@ -39,24 +48,6 @@ export interface Playlist {
   created_at: string;
   updated_at: string;
   tracks?: Track[];
-}
-
-export interface ImportPreviewTrack {
-  position: number;
-  title: string;
-  artist: string;
-  duration_ms?: number;
-  notes?: string;
-  spotify_track_id?: string;
-  youtube_video_id?: string;
-}
-
-export interface ImportPreviewResult {
-  title: string;
-  description?: string;
-  cover_url?: string;
-  tracks: ImportPreviewTrack[];
-  platform: 'spotify' | 'youtube' | 'unknown';
 }
 
 export interface UserProfile {

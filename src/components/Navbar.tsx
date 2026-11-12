@@ -3,13 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
-import { Disc, User, LogIn } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Disc, User, Lock, Sparkles } from 'lucide-react';
 import { UserProfile } from '@/types';
 
 export function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
 
   const checkUser = async () => {
@@ -17,16 +16,6 @@ export function Navbar() {
       const res = await fetch('/api/auth');
       const data = await res.json();
       if (data.authenticated && data.user) {
-        // Buscar perfil específico para este nombre de usuario
-        const usernameKey = `canon_profile_${data.user.username.toLowerCase()}`;
-        const localProfile = localStorage.getItem(usernameKey);
-        if (localProfile) {
-          try {
-            const parsed = JSON.parse(localProfile);
-            setUser({ ...data.user, ...parsed });
-            return;
-          } catch {}
-        }
         setUser(data.user);
         return;
       }
@@ -38,10 +27,7 @@ export function Navbar() {
       try {
         const parsed = JSON.parse(localSession);
         if (parsed && parsed.username) {
-          const usernameKey = `canon_profile_${parsed.username.toLowerCase()}`;
-          const localProfile = localStorage.getItem(usernameKey);
-          const customProfile = localProfile ? JSON.parse(localProfile) : {};
-          setUser({ ...parsed, ...customProfile });
+          setUser(parsed);
           return;
         }
       } catch {}
@@ -63,28 +49,26 @@ export function Navbar() {
     };
   }, [pathname]);
 
-  const isHome = pathname === '/';
-
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#09090b]/80 border-b border-[#27272a]/60">
+    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#09090b]/85 border-b border-[#27272a]/60">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Lado Izquierdo: Logo */}
         <div className="flex items-center gap-4">
           <Link 
             href="/" 
-            className="flex items-center gap-2.5 sm:gap-3 group transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 group transition-opacity hover:opacity-85"
           >
-            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/40 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/40 flex-shrink-0 group-hover:border-white/50 transition-colors">
               <Disc className="w-4 h-4 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] sm:text-xs font-mono tracking-widest text-zinc-400 uppercase hidden xs:block">Biblioteca Sonora</span>
-              <span className="text-sm font-semibold tracking-tight text-white">MOLVA</span>
+              <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase hidden xs:block">Repositorio Sonoro</span>
+              <span className="text-sm font-semibold tracking-tight text-white font-sans">MOLVA</span>
             </div>
           </Link>
         </div>
 
-        {/* Lado Derecho: Navegación y Cuenta Activa */}
+        {/* Lado Derecho: Navegación */}
         <nav className="flex items-center gap-3 sm:gap-4 text-xs font-mono uppercase tracking-wider">
           <Link 
             href="/" 
@@ -95,10 +79,19 @@ export function Navbar() {
 
           <span className="text-zinc-700">/</span>
 
+          <Link 
+            href="/u/Vrak_23" 
+            className={`transition-colors ${pathname.startsWith('/u/') ? 'text-white font-semibold' : 'text-zinc-400 hover:text-white'}`}
+          >
+            Curador
+          </Link>
+
+          <span className="text-zinc-700">/</span>
+
           {user ? (
             <Link 
               href="/admin" 
-              className={`flex items-center gap-2 px-2 sm:px-2.5 py-1 rounded-md border transition-all ${
+              className={`flex items-center gap-2 px-2.5 py-1 rounded-md border transition-all ${
                 pathname === '/admin'
                   ? 'bg-zinc-800 border-zinc-600 text-white font-medium'
                   : 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-600'
@@ -109,19 +102,20 @@ export function Navbar() {
                   <Image src={user.avatarUrl} alt="Avatar" fill className="object-cover" />
                 </div>
               ) : (
-                <User className="w-3.5 h-3.5 text-zinc-400" />
+                <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
               )}
-              <span className="truncate max-w-[85px] sm:max-w-[130px] normal-case font-sans font-medium text-xs">
-                {user.displayName || user.username}
+              <span className="normal-case font-sans font-medium text-xs">
+                Estudio
               </span>
             </Link>
           ) : (
             <Link 
               href="/admin" 
               className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors"
+              title="Acceso al panel de curaduría"
             >
-              <LogIn className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Login</span>
+              <Lock className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Estudio</span>
             </Link>
           )}
         </nav>

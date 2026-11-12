@@ -1,78 +1,55 @@
 -- =========================================================
--- ESQUEMA DE BASE DE DATOS PARA REPOSITORIO CANON (LANZAMIENTOS)
+-- ARQUITECTURA DE DATOS: MOLVA + TUNE TRACKER (SUPABASE)
 -- =========================================================
+-- Molva funciona como visualizador y repositorio discográfico
+-- alimentado directamente por las playlists creadas en Tune Tracker.
 
-create extension if not exists "uuid-ossp";
-
--- 1. Tabla de Perfiles de Usuario
-create table if not exists profiles (
-  id uuid primary key default uuid_generate_v4(),
-  username text unique not null,
-  display_name text,
-  email text,
-  bio text,
-  avatar_url text,
-  spotify_url text,
-  lastfm_url text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- 2. Tabla de Playlists (Lanzamientos tipo Álbum)
-create table if not exists playlists (
-  id uuid primary key default uuid_generate_v4(),
-  slug text unique not null,
-  title text not null,
-  description text,
-  story text, -- Liner Notes / Historia
-  cover_url text,
-  dominant_color text default '#262626',
-  spotify_url text,
-  youtube_url text,
-  tags text[] default '{}',
-  
-  -- Atributos de Lanzamiento
-  release_date text default to_char(now(), 'YYYY-MM-DD'),
-  release_type text default 'LP',
-  catalog_number text,
-  upcoming_album text,
-  
-  -- Creador
-  creator_username text not null,
-  creator_name text,
-  creator_avatar text,
-
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+-- 1. Tabla nativa de Tune Tracker para selecciones curadas
+-- (Ya existente en Supabase PostgreSQL: public.spotitracker_curator)
+create table if not exists public.spotitracker_curator (
+  id text primary key default 'default',
+  user_id text not null default 'Vrak_23',
+  cycle_year text,
+  cycle_half text,
+  target_count integer default 18,
+  selected_tracks jsonb default '[]'::jsonb,
+  honorable_mentions jsonb default '[]'::jsonb,
+  year_favorites jsonb default '[]'::jsonb,
+  settings jsonb default '{}'::jsonb,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. Tabla de Canciones / Tracks
-create table if not exists tracks (
-  id uuid primary key default uuid_generate_v4(),
-  playlist_id uuid references playlists(id) on delete cascade not null,
-  position integer not null default 0,
-  title text not null,
-  artist text not null,
-  duration_ms integer,
-  notes text,
-  spotify_track_id text,
-  youtube_video_id text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
+-- =========================================================
+-- ESTRUCTURA DE PERSONALIZACIÓN DE MOLVA DENTRO DE SETTINGS:
+-- =========================================================
+-- Dentro de `settings.molva` se guardan las personalizaciones visuales:
+-- {
+--   "title": "All Of The Moons",
+--   "slug": "all-of-the-moons",
+--   "description": "Selección curada semestral...",
+--   "story": "Liner Notes / Memoria conceptual...",
+--   "cover_url": "data:image/webp;base64,... o URL",
+--   "dominant_color": "#3b1d28",
+--   "release_date": "2026-11-12",
+--   "release_type": "Semestral",
+--   "catalog_number": "TT-2026-02",
+--   "spotify_url": "https://open.spotify.com/playlist/...",
+--   "youtube_url": "https://music.youtube.com/playlist/...",
+--   "tags": ["TUNE TRACKER", "METAL", "ROCK"],
+--   "creator_name": "Vrak23",
+--   "creator_avatar": "",
+--   "trackNotes": {
+--     "spotify:track:...": "Nota personalizada para este tema"
+--   }
+-- }
 
--- Índices
-create index if not exists idx_playlists_slug on playlists(slug);
-create index if not exists idx_playlists_creator on playlists(creator_username);
-create index if not exists idx_tracks_playlist_id on tracks(playlist_id);
+-- Habilitar RLS público para lectura y escritura desde la aplicación
+alter table public.spotitracker_curator enable row level security;
 
--- Políticas RLS públicas
-alter table profiles enable row level security;
-alter table playlists enable row level security;
-alter table tracks enable row level security;
+create policy "Lectura pública spotitracker_curator" 
+  on public.spotitracker_curator for select 
+  using (true);
 
-create policy "Lectura pública de perfiles" on profiles for select using (true);
-create policy "Lectura pública de playlists" on playlists for select using (true);
-create policy "Lectura pública de tracks" on tracks for select using (true);
-
-create policy "Gestión de perfiles" on profiles for all using (true);
-create policy "Gestión de playlists" on playlists for all using (true);
-create policy "Gestión de tracks" on tracks for all using (true);
+create policy "Gestión pública spotitracker_curator" 
+  on public.spotitracker_curator for all 
+  using (true);

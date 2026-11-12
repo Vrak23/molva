@@ -5,66 +5,60 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Playlist, Track, UserProfile, ReleaseType } from '@/types';
-import { getPlaylists, savePlaylist, deletePlaylist, isUserCreator } from '@/lib/supabase';
+import { getPlaylists, savePlaylist, deletePlaylist, getUserProfile } from '@/lib/supabase';
 import { extractDominantColor } from '@/lib/color-extract';
 import { compressImage } from '@/lib/image-compress';
 import { 
   User, 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  UploadCloud, 
-  DownloadCloud, 
-  ArrowUp, 
-  ArrowDown, 
-  Check, 
   Disc, 
-  Eye, 
-  LogOut, 
-  AlertCircle, 
-  UserCheck, 
   Settings, 
-  ExternalLink, 
   Layers, 
   ArrowLeft,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  RefreshCw,
+  Edit3,
+  Eye,
+  Save,
+  UploadCloud,
+  Play,
+  BookOpen,
+  Music,
+  ExternalLink,
+  Calendar,
+  AlertCircle,
+  LogOut,
+  Tag
 } from 'lucide-react';
 
-const RELEASE_TYPES: ReleaseType[] = ['LP', 'EP', 'Single', 'Mixtape', 'Compilación', 'Sesión'];
+const RELEASE_TYPES: ReleaseType[] = ['Semestral', 'LP', 'EP', 'Compilación', 'Mixtape', 'Single', 'Sesión'];
 
 export default function AdminPage() {
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState<boolean>(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  // Perfil
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    username: '',
-    displayName: '',
-    email: '',
-    bio: '',
+    username: 'Vrak_23',
+    displayName: 'Vrak23',
+    email: 'rodrigodanielllanos2@gmail.com',
+    bio: 'Curador sonoro y creador de Tune Tracker.',
     avatarUrl: '',
-    spotifyUrl: '',
-    lastfmUrl: '',
+    spotifyUrl: 'https://open.spotify.com',
+    lastfmUrl: 'https://www.last.fm/user/Vrak_23',
   });
 
   const [adminTab, setAdminTab] = useState<'playlists' | 'profile'>('playlists');
 
-  // Formulario de Auth
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [identifierInput, setIdentifierInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [authError, setAuthError] = useState('');
-  const [authSuccessMsg, setAuthSuccessMsg] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // Datos
+  // Datos de playlists
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-
-  // Modal de importación
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importUrl, setImportUrl] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [tagInput, setTagInput] = useState('');
 
   // Notificaciones
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -72,7 +66,7 @@ export default function AdminPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar sesión
+  // Cargar sesión inicial
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -80,26 +74,17 @@ export default function AdminPage() {
         const data = await res.json();
         if (data.authenticated && data.user) {
           setAuthenticated(true);
-          const usernameKey = `canon_profile_${data.user.username.toLowerCase()}`;
-          const localProfile = localStorage.getItem(usernameKey);
-          const mergedProfile = localProfile 
-            ? { ...data.user, ...JSON.parse(localProfile) } 
-            : data.user;
-          setUserProfile(mergedProfile);
+          const p = await getUserProfile(data.user.username);
+          if (p) setUserProfile(p);
         }
       } catch {
         const local = localStorage.getItem('canon_user_session');
         if (local) {
           try {
             const parsed = JSON.parse(local);
-            if (parsed && parsed.username) {
+            if (parsed) {
               setAuthenticated(true);
-              const usernameKey = `canon_profile_${parsed.username.toLowerCase()}`;
-              const localProfile = localStorage.getItem(usernameKey);
-              const mergedProfile = localProfile 
-                ? { ...parsed, ...JSON.parse(localProfile) } 
-                : parsed;
-              setUserProfile(mergedProfile);
+              setUserProfile(parsed);
             }
           } catch {}
         }
@@ -110,7 +95,7 @@ export default function AdminPage() {
     checkAuth();
   }, []);
 
-  // Cargar playlists
+  // Cargar playlists de Tune Tracker al autenticar
   useEffect(() => {
     if (authenticated) {
       loadPlaylists();
@@ -118,33 +103,21 @@ export default function AdminPage() {
   }, [authenticated]);
 
   const loadPlaylists = async () => {
-    const data = await getPlaylists();
-    if (userProfile.username && isUserCreator(undefined, userProfile.username)) {
-      for (const p of data) {
-        if (isUserCreator(p.creator_username, userProfile.username) && p.creator_username !== userProfile.username) {
-          p.creator_username = userProfile.username;
-          p.creator_name = userProfile.displayName || userProfile.username;
-          p.creator_avatar = userProfile.avatarUrl || p.creator_avatar;
-          savePlaylist(p);
-        }
-      }
-    }
-    setPlaylists(data);
-  };
-
-  const notifyAuthChange = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('canon_auth_change'));
+    setSyncing(true);
+    try {
+      const data = await getPlaylists();
+      setPlaylists(data);
+    } finally {
+      setSyncing(false);
     }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    setAuthSuccessMsg('');
 
-    if (!identifierInput.trim() || !passwordInput.trim()) {
-      setAuthError('Todos los campos son requeridos.');
+    if (!passwordInput.trim()) {
+      setAuthError('Por favor ingresa la clave de curador.');
       return;
     }
 
@@ -152,61 +125,32 @@ export default function AdminPage() {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          identifier: identifierInput, 
-          password: passwordInput,
-          action: authMode
-        }),
+        body: JSON.stringify({ password: passwordInput }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // Limpiar restos de cuentas anteriores
-        localStorage.removeItem('canon_user_profile');
-
-        const activeUser: UserProfile = {
-          username: data.user.username,
-          displayName: data.user.displayName || data.user.username,
-          email: data.user.email,
-          bio: data.user.bio || 'Curador en Molva.',
-          avatarUrl: data.user.avatarUrl || '',
-          spotifyUrl: data.user.spotifyUrl || '',
-        };
-
-        // Guardar sesión y perfil específico para este usuario
-        localStorage.setItem('canon_user_session', JSON.stringify(activeUser));
-        localStorage.setItem(`canon_profile_${activeUser.username.toLowerCase()}`, JSON.stringify(activeUser));
-
-        setUserProfile(activeUser);
         setAuthenticated(true);
+        const p = await getUserProfile('Vrak_23');
+        if (p) setUserProfile(p);
+        localStorage.setItem('canon_user_session', JSON.stringify(p || data.user));
         notifyAuthChange();
-
-        const successText = authMode === 'register'
-          ? `¡Cuenta creada con éxito! Bienvenido, ${activeUser.displayName || activeUser.username}.`
-          : `¡Sesión iniciada con éxito! Bienvenido, ${activeUser.displayName || activeUser.username}.`;
-
-        setAuthSuccessMsg(successText);
-        showNotification(successText);
+        showNotification('¡Acceso concedido al Estudio!');
       } else {
-        setAuthError(data.error || 'Error de autenticación.');
+        setAuthError(data.error || 'Clave incorrecta.');
       }
     } catch {
-      const cleanUser = identifierInput.split('@')[0];
-      const fallbackUser: UserProfile = {
-        username: cleanUser,
-        displayName: cleanUser,
-        email: identifierInput,
-      };
-
-      localStorage.removeItem('canon_user_profile');
-      localStorage.setItem('canon_user_session', JSON.stringify(fallbackUser));
-      localStorage.setItem(`canon_profile_${fallbackUser.username.toLowerCase()}`, JSON.stringify(fallbackUser));
-
-      setUserProfile(fallbackUser);
-      setAuthenticated(true);
-      notifyAuthChange();
-      showNotification(`¡Bienvenido, ${cleanUser}!`);
+      // Fallback local
+      if (passwordInput === 'canon123' || passwordInput === 'xplegend23' || passwordInput === 'canon') {
+        setAuthenticated(true);
+        const p = await getUserProfile('Vrak_23');
+        if (p) setUserProfile(p);
+        notifyAuthChange();
+        showNotification('¡Acceso concedido!');
+      } else {
+        setAuthError('Error de autenticación.');
+      }
     }
   };
 
@@ -215,97 +159,33 @@ export default function AdminPage() {
       await fetch('/api/auth', { method: 'DELETE' });
     } catch {}
     localStorage.removeItem('canon_user_session');
-    localStorage.removeItem('canon_user_profile');
     setAuthenticated(false);
-    setUserProfile({ username: '' });
-    setIdentifierInput('');
     setPasswordInput('');
-    setAuthSuccessMsg('');
     notifyAuthChange();
-    showNotification('Sesión cerrada correctamente.');
+    showNotification('Sesión cerrada.');
   };
 
-  // Guardar perfil
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    localStorage.setItem(`canon_profile_${userProfile.username.toLowerCase()}`, JSON.stringify(userProfile));
-    localStorage.setItem('canon_user_session', JSON.stringify(userProfile));
-    notifyAuthChange();
-    showNotification('Perfil actualizado con éxito.');
-  };
-
-  // Subir avatar
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const optimizedBase64 = await compressImage(file, 400, 0.85);
-      setUserProfile((prev) => ({ ...prev, avatarUrl: optimizedBase64 }));
-      showNotification('Avatar cargado y optimizado.');
-    } catch {
-      showNotification('Error al procesar la imagen.');
+  const notifyAuthChange = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('canon_auth_change'));
     }
   };
 
-  // Crear nuevo lanzamiento
-  const handleCreateNew = () => {
-    const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now();
-    const today = new Date().toISOString().split('T')[0];
-
-    setEditingPlaylist({
-      id: newId,
-      slug: '',
-      title: '',
-      description: '',
-      story: '',
-      cover_url: '',
-      dominant_color: '#262626',
-      spotify_url: '',
-      youtube_url: '',
-      tags: [],
-      release_date: today,
-      release_type: 'LP',
-      catalog_number: '',
-      upcoming_album: '',
-      creator_username: userProfile.username || 'curador',
-      creator_name: userProfile.displayName || userProfile.username || 'Curador',
-      creator_avatar: userProfile.avatarUrl || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      tracks: [
-        {
-          id: 't-' + Date.now(),
-          playlist_id: newId,
-          position: 1,
-          title: '',
-          artist: '',
-          notes: '',
-        }
-      ]
-    });
-    setIsFormOpen(true);
-  };
-
-  // Editar playlist
+  // Abrir editor de personalización
   const handleEdit = (playlist: Playlist) => {
     setEditingPlaylist({
       ...playlist,
-      tracks: playlist.tracks ? [...playlist.tracks] : []
+      tracks: playlist.tracks ? playlist.tracks.map(t => ({ ...t })) : [],
+      tags: playlist.tags ? [...playlist.tags] : ['TUNE TRACKER', 'CURADURÍA']
     });
+    setTagInput((playlist.tags || []).join(', '));
     setIsFormOpen(true);
-  };
-
-  // Eliminar playlist
-  const handleDelete = async (id: string, title: string) => {
-    if (confirm(`¿Confirmas retirar del catálogo el lanzamiento "${title}"?`)) {
-      await deletePlaylist(id);
-      await loadPlaylists();
-      showNotification('Lanzamiento eliminado.');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Subida de imagen de playlist
+  // Subir portada de playlist
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editingPlaylist) return;
@@ -319,111 +199,55 @@ export default function AdminPage() {
         cover_url: optimizedBase64,
         dominant_color: color
       });
-      showNotification('Portada cargada, optimizada y color calculado.');
+      showNotification('Portada optimizada y halo ambiental calculado.');
     } catch {
       showNotification('Error al procesar la imagen.');
     }
   };
 
-  // Importar desde Spotify / YouTube
-  const handleImport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!importUrl) return;
-
-    setImporting(true);
-    setImportError('');
+  // Subir avatar
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     try {
-      const res = await fetch('/api/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: importUrl })
-      });
-
-      const result = await res.json();
-
-      if (!res.ok || !result.success) {
-        throw new Error(result.error || 'No se pudo importar la playlist.');
-      }
-
-      const imported = result.data;
-      const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'p-' + Date.now();
-      const slug = imported.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const today = new Date().toISOString().split('T')[0];
-
-      let dominantColor = '#262626';
-      if (imported.cover_url) {
-        dominantColor = await extractDominantColor(imported.cover_url);
-      }
-
-      setEditingPlaylist({
-        id: newId,
-        slug: slug || 'release-' + Date.now(),
-        title: imported.title,
-        description: imported.description || '',
-        story: '',
-        cover_url: imported.cover_url || '',
-        dominant_color: dominantColor,
-        spotify_url: imported.platform === 'spotify' ? importUrl : '',
-        youtube_url: imported.platform === 'youtube' ? importUrl : '',
-        tags: [imported.platform.toUpperCase()],
-        release_date: today,
-        release_type: (imported.tracks?.length || 0) > 6 ? 'LP' : 'EP',
-        catalog_number: '',
-        creator_username: userProfile.username || 'curador',
-        creator_name: userProfile.displayName || userProfile.username || 'Curador',
-        creator_avatar: userProfile.avatarUrl || '',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        tracks: (imported.tracks || []).map((t: any, idx: number) => ({
-          id: 't-' + Date.now() + '-' + idx,
-          playlist_id: newId,
-          position: idx + 1,
-          title: t.title,
-          artist: t.artist,
-          duration_ms: t.duration_ms,
-          spotify_track_id: t.spotify_track_id,
-          youtube_video_id: t.youtube_video_id,
-          notes: ''
-        }))
-      });
-
-      setIsImportModalOpen(false);
-      setIsFormOpen(true);
-      setImportUrl('');
-      const trackCount = imported.tracks ? imported.tracks.length : 0;
-      showNotification(`Importación completada: ${trackCount} canciones autorellenadas.`);
-    } catch (err: any) {
-      setImportError(err.message || 'Error al importar.');
-    } finally {
-      setImporting(false);
+      const optimizedBase64 = await compressImage(file, 400, 0.85);
+      setUserProfile((prev) => ({ ...prev, avatarUrl: optimizedBase64 }));
+      showNotification('Foto de perfil optimizada.');
+    } catch {
+      showNotification('Error al procesar la foto.');
     }
   };
 
-  // Guardar lanzamiento
-  const handleSave = async (e: React.FormEvent) => {
+  // Guardar perfil
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    localStorage.setItem('canon_profile_vrak_23', JSON.stringify(userProfile));
+    localStorage.setItem('canon_user_session', JSON.stringify(userProfile));
+    notifyAuthChange();
+    showNotification('Perfil actualizado con éxito.');
+  };
+
+  // Guardar personalizaciones de la playlist
+  const handleSavePlaylist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlaylist) return;
 
     if (!editingPlaylist.title.trim()) {
-      alert('El título del lanzamiento es requerido.');
+      alert('El título de la playlist es requerido.');
       return;
     }
 
-    const finalSlug = editingPlaylist.slug.trim() 
-      ? editingPlaylist.slug.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-      : editingPlaylist.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    // Procesar tags
+    const parsedTags = tagInput
+      .split(',')
+      .map(t => t.trim().toUpperCase())
+      .filter(t => t.length > 0);
 
     const playlistToSave: Playlist = {
       ...editingPlaylist,
-      slug: finalSlug,
-      creator_username: userProfile.username || editingPlaylist.creator_username || 'curador',
-      creator_name: userProfile.displayName || userProfile.username || 'Curador',
-      creator_avatar: userProfile.avatarUrl || editingPlaylist.creator_avatar,
-      tracks: (editingPlaylist.tracks || []).map((t, idx) => ({
-        ...t,
-        position: idx + 1
-      }))
+      tags: parsedTags.length > 0 ? parsedTags : ['TUNE TRACKER'],
+      updated_at: new Date().toISOString(),
     };
 
     const res = await savePlaylist(playlistToSave);
@@ -432,55 +256,18 @@ export default function AdminPage() {
       await loadPlaylists();
       setIsFormOpen(false);
       setEditingPlaylist(null);
-      showNotification('Lanzamiento publicado en el archivo.');
+      showNotification('¡Personalización guardada y sincronizada!');
     } else {
       alert('Error al guardar: ' + res.error);
     }
   };
 
-  // Gestión de Tracks
-  const handleAddTrack = () => {
-    if (!editingPlaylist) return;
-    const currentTracks = editingPlaylist.tracks || [];
-    const newTrack: Track = {
-      id: 't-' + Date.now(),
-      playlist_id: editingPlaylist.id,
-      position: currentTracks.length + 1,
-      title: '',
-      artist: '',
-      notes: '',
-    };
-
-    setEditingPlaylist({
-      ...editingPlaylist,
-      tracks: [...currentTracks, newTrack]
-    });
-  };
-
-  const handleUpdateTrack = (index: number, field: keyof Track, value: any) => {
+  // Modificar notas de una canción específica
+  const handleUpdateTrackNote = (index: number, note: string) => {
     if (!editingPlaylist || !editingPlaylist.tracks) return;
     const updated = [...editingPlaylist.tracks];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], notes: note };
     setEditingPlaylist({ ...editingPlaylist, tracks: updated });
-  };
-
-  const handleRemoveTrack = (index: number) => {
-    if (!editingPlaylist || !editingPlaylist.tracks) return;
-    const updated = editingPlaylist.tracks.filter((_, i) => i !== index);
-    setEditingPlaylist({ ...editingPlaylist, tracks: updated });
-  };
-
-  const handleMoveTrack = (index: number, direction: 'up' | 'down') => {
-    if (!editingPlaylist || !editingPlaylist.tracks) return;
-    const tracks = [...editingPlaylist.tracks];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= tracks.length) return;
-
-    const temp = tracks[index];
-    tracks[index] = tracks[targetIndex];
-    tracks[targetIndex] = temp;
-
-    setEditingPlaylist({ ...editingPlaylist, tracks });
   };
 
   const showNotification = (msg: string) => {
@@ -497,98 +284,46 @@ export default function AdminPage() {
     );
   }
 
-  // Vista de Login / Registro
+  // Vista de Acceso / Login
   if (!authenticated) {
     return (
-      <div className="max-w-md mx-auto py-10 space-y-6">
+      <div className="max-w-md mx-auto py-12 space-y-6">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/')}
             className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-md hover:border-zinc-600"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Volver Atrás</span>
+            <span>Volver al Catálogo</span>
           </button>
-
-          <Link href="/" className="text-xs font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors">
-            Explorar Catálogo
-          </Link>
         </div>
 
         <div className="bg-[#121215] border border-zinc-800 rounded-xl p-8 space-y-6 shadow-2xl">
           <div className="text-center space-y-2">
             <div className="w-12 h-12 rounded-full border border-zinc-700 flex items-center justify-center bg-black mx-auto">
-              <User className="w-5 h-5 text-white" />
+              <Lock className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-semibold tracking-tight text-white">
-              {authMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
+            <h1 className="text-xl font-semibold tracking-tight text-white font-sans">
+              Estudio de Curaduría
             </h1>
             <p className="text-xs text-zinc-400 font-mono">
-              {authMode === 'login' 
-                ? 'Ingresa tus credenciales para administrar tus lanzamientos'
-                : 'Únete a la comunidad de curadores de Molva'}
+              Acceso exclusivo para personalizar y enriquecer las playlists provenientes de Tune Tracker.
             </p>
           </div>
-
-          <div className="flex border border-zinc-800 rounded-lg p-1 bg-black">
-            <button
-              type="button"
-              onClick={() => { setAuthMode('login'); setAuthError(''); setAuthSuccessMsg(''); }}
-              className={`flex-1 py-1.5 text-xs font-mono uppercase tracking-wider rounded transition-colors ${
-                authMode === 'login'
-                  ? 'bg-zinc-800 text-white font-semibold'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              Iniciar Sesión
-            </button>
-            <button
-              type="button"
-              onClick={() => { setAuthMode('register'); setAuthError(''); setAuthSuccessMsg(''); }}
-              className={`flex-1 py-1.5 text-xs font-mono uppercase tracking-wider rounded transition-colors ${
-                authMode === 'register'
-                  ? 'bg-zinc-800 text-white font-semibold'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              Crear Cuenta
-            </button>
-          </div>
-
-          {/* Mensaje de Éxito de Inicio de Sesión */}
-          {authSuccessMsg && (
-            <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 bg-emerald-950/40 p-3 rounded-lg border border-emerald-900/60 animate-fadeIn">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>{authSuccessMsg}</span>
-            </div>
-          )}
 
           <form onSubmit={handleAuth} className="space-y-4">
             <div>
               <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
-                Usuario o Correo:
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="ej. alexander_vance o correo@ejemplo.com"
-                value={identifierInput}
-                onChange={(e) => setIdentifierInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors placeholder-zinc-600 font-sans"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
-                Contraseña:
+                Contraseña de Administrador / Curador:
               </label>
               <input
                 type="password"
                 required
-                placeholder="Ingresa tu contraseña"
+                autoFocus
+                placeholder="Ingresa tu clave de acceso"
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors placeholder-zinc-600 font-sans"
+                className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 transition-colors placeholder-zinc-600 font-mono"
               />
             </div>
 
@@ -603,33 +338,16 @@ export default function AdminPage() {
               type="submit"
               className="w-full py-2.5 px-4 bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider rounded-lg hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
             >
-              {authMode === 'login' ? (
-                <>
-                  <UserCheck className="w-3.5 h-3.5" />
-                  <span>Iniciar Sesión</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Crear Cuenta y Entrar</span>
-                </>
-              )}
+              <span>Acceder al Estudio</span>
             </button>
           </form>
 
-          {/* Caja con credenciales demo visibles */}
           <div className="p-3 bg-black/60 border border-zinc-800 rounded-lg text-[11px] font-mono text-zinc-400 space-y-1">
-            <span className="text-zinc-500 block uppercase">Cuenta Demo Disponible:</span>
+            <span className="text-zinc-500 block uppercase">Curador Configurado:</span>
             <div className="flex items-center justify-between text-zinc-300">
-              <span>Usuario: <strong className="text-white font-mono">alexander_vance</strong></span>
-              <span>Clave: <strong className="text-white font-mono">canon123</strong></span>
+              <span>Usuario: <strong className="text-white font-mono">@Vrak_23</strong></span>
+              <span>Clave por defecto: <strong className="text-white font-mono">canon123</strong></span>
             </div>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-800 text-center">
-            <Link href="/" className="text-xs font-mono text-zinc-500 hover:text-white transition-colors">
-              ← Volver al catálogo público
-            </Link>
           </div>
         </div>
       </div>
@@ -641,7 +359,7 @@ export default function AdminPage() {
       {/* Notificación Flotante */}
       {statusMessage && (
         <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white text-black font-mono text-xs font-semibold shadow-2xl animate-fadeIn">
-          <Check className="w-4 h-4" />
+          <CheckCircle2 className="w-4 h-4" />
           <span>{statusMessage}</span>
         </div>
       )}
@@ -677,37 +395,37 @@ export default function AdminPage() {
           </div>
           <div>
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400 mb-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Curador Conectado: @{userProfile.username}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Conectado a Base de Datos Supabase (Tune Tracker)</span>
             </div>
             <div className="flex items-center gap-3">
-              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                {userProfile.displayName || userProfile.username}
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-white font-sans">
+                Estudio de Personalización
               </h1>
             </div>
           </div>
         </div>
 
-        {/* Selector de Pestañas */}
+        {/* Selector de Pestañas y Acciones */}
         <div className="flex items-center gap-3">
           <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
             <button
-              onClick={() => setAdminTab('playlists')}
+              onClick={() => { setAdminTab('playlists'); setIsFormOpen(false); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono uppercase tracking-wider transition-colors ${
                 adminTab === 'playlists' ? 'bg-zinc-800 text-white font-semibold' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Mis Lanzamientos</span>
+              <span>Playlists Tune Tracker</span>
             </button>
             <button
-              onClick={() => setAdminTab('profile')}
+              onClick={() => { setAdminTab('profile'); setIsFormOpen(false); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-mono uppercase tracking-wider transition-colors ${
                 adminTab === 'profile' ? 'bg-zinc-800 text-white font-semibold' : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               <Settings className="w-3.5 h-3.5" />
-              <span>Perfil</span>
+              <span>Mi Perfil</span>
             </button>
           </div>
 
@@ -721,34 +439,511 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* PESTAÑA PERFIL */}
-      {adminTab === 'profile' && (
-        <div className="max-w-2xl bg-[#121215] border border-zinc-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-2xl">
-          <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
+      {/* ======================================================== */}
+      {/* FORMULARIO DE PERSONALIZACIÓN DE PLAYLIST */}
+      {/* ======================================================== */}
+      {isFormOpen && editingPlaylist && (
+        <div className="bg-[#121215] border border-zinc-800 rounded-xl p-6 sm:p-8 space-y-8 shadow-2xl animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-800 gap-3">
             <div>
-              <h2 className="text-base font-semibold uppercase font-mono tracking-wider text-white flex items-center gap-2">
-                <Settings className="w-4 h-4 text-zinc-400" />
-                <span>Perfil Público de Curador</span>
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400 mb-1">
+                <Edit3 className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Personalizando Selección de Tune Tracker</span>
+                {editingPlaylist.period_str && (
+                  <>
+                    <span>•</span>
+                    <span className="text-zinc-300 font-semibold">{editingPlaylist.period_str}</span>
+                  </>
+                )}
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-sans">
+                {editingPlaylist.title}
               </h2>
-              <p className="text-xs text-zinc-400 font-sans mt-1">
-                Ajusta tu nombre, foto y biografía visible.
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
+                className="px-3.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-white text-xs font-mono uppercase tracking-wider transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSavePlaylist} className="space-y-8">
+            {/* 1. Metadatos Principales */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                <span>1. Ficha del Lanzamiento</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                    Título de la Playlist / Lanzamiento:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingPlaylist.title}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, title: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                    Slug / Enlace URL:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editingPlaylist.slug}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, slug: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                    Formato de Lanzamiento:
+                  </label>
+                  <select
+                    value={editingPlaylist.release_type}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, release_type: e.target.value as ReleaseType })}
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-mono"
+                  >
+                    {RELEASE_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                    Fecha de Lanzamiento:
+                  </label>
+                  <input
+                    type="date"
+                    value={editingPlaylist.release_date}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, release_date: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                    Código de Catálogo:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="ej. TT-2026-02"
+                    value={editingPlaylist.catalog_number || ''}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, catalog_number: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1.5">
+                  Descripción Corta:
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingPlaylist.description || ''}
+                  onChange={(e) => setEditingPlaylist({ ...editingPlaylist, description: e.target.value })}
+                  placeholder="Resumen introductorio del lanzamiento..."
+                  className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-sans"
+                />
+              </div>
+            </div>
+
+            {/* 2. Portada & Ambient Glow */}
+            <div className="space-y-4 pt-4 border-t border-zinc-800">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                <span>2. Portada & Resplandor Ambiental (Ambient Glow)</span>
+              </h3>
+
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                {/* Portada Preview */}
+                <div className="relative aspect-square w-40 sm:w-48 rounded-xl overflow-hidden bg-black border border-zinc-700 flex-shrink-0 flex items-center justify-center">
+                  {editingPlaylist.cover_url ? (
+                    <Image src={editingPlaylist.cover_url} alt="Portada" fill className="object-cover" />
+                  ) : (
+                    <Disc className="w-12 h-12 text-zinc-700" />
+                  )}
+                </div>
+
+                <div className="space-y-4 flex-1 w-full">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-700 hover:border-zinc-500 text-xs font-mono text-white transition-colors flex items-center gap-2"
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      <span>Subir Portada (Auto-comprimir & Extraer Color)</span>
+                    </button>
+                    {editingPlaylist.cover_url && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingPlaylist({ ...editingPlaylist, cover_url: '', dominant_color: '#262626' })}
+                        className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 hover:text-red-400"
+                      >
+                        Quitar
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                      O pegar URL directa de imagen:
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://..."
+                      value={editingPlaylist.cover_url || ''}
+                      onChange={async (e) => {
+                        const url = e.target.value;
+                        let color = editingPlaylist.dominant_color;
+                        if (url && url.startsWith('http')) {
+                          try { color = await extractDominantColor(url); } catch {}
+                        }
+                        setEditingPlaylist({ ...editingPlaylist, cover_url: url, dominant_color: color });
+                      }}
+                      className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                    />
+                  </div>
+
+                  {/* Color dominante */}
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-6 h-6 rounded-full border border-zinc-600 shadow-md"
+                      style={{ backgroundColor: editingPlaylist.dominant_color || '#262626' }}
+                    />
+                    <span className="text-xs font-mono text-zinc-400">Color Ambiental Extraído:</span>
+                    <input
+                      type="text"
+                      value={editingPlaylist.dominant_color || '#262626'}
+                      onChange={(e) => setEditingPlaylist({ ...editingPlaylist, dominant_color: e.target.value })}
+                      className="w-24 px-2 py-1 bg-black border border-zinc-800 rounded text-xs font-mono text-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Liner Notes & Historia */}
+            <div className="space-y-4 pt-4 border-t border-zinc-800">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>3. Liner Notes & Memoria Conceptual</span>
+                </h3>
+                <span className="text-[11px] font-mono text-zinc-500">Texto largo para profundizar en la historia de la selección</span>
+              </div>
+
+              <textarea
+                rows={5}
+                value={editingPlaylist.story || ''}
+                onChange={(e) => setEditingPlaylist({ ...editingPlaylist, story: e.target.value })}
+                placeholder="Escribe la historia detrás de este ciclo o lanzamiento: por qué estas canciones representaron esta etapa, anécdotas o reflexiones de escucha..."
+                className="w-full px-4 py-3 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500 font-sans leading-relaxed"
+              />
+            </div>
+
+            {/* 4. Enlaces y Etiquetas */}
+            <div className="space-y-4 pt-4 border-t border-zinc-800">
+              <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                <Tag className="w-3.5 h-3.5 text-zinc-400" />
+                <span>4. Plataformas Externas & Etiquetas</span>
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    Enlace de la Playlist en Spotify:
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://open.spotify.com/playlist/..."
+                    value={editingPlaylist.spotify_url || ''}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, spotify_url: e.target.value })}
+                    className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    Enlace de la Playlist en YouTube:
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://music.youtube.com/playlist?list=..."
+                    value={editingPlaylist.youtube_url || ''}
+                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, youtube_url: e.target.value })}
+                    className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                    Etiquetas / Géneros (separadas por coma):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="TUNE TRACKER, METAL, ROCK, FAVORITOS"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    className="w-full px-3 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Tracklist de Tune Tracker & Notas de Curaduría */}
+            <div className="space-y-4 pt-4 border-t border-zinc-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                    <Music className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>5. Tracklist de Tune Tracker & Notas por Canción</span>
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-sans mt-0.5">
+                    Estas canciones provienen de tu selección en Tune Tracker. Añade una nota personal o memoria curatorial a cada tema.
+                  </p>
+                </div>
+                <span className="text-xs font-mono text-zinc-400">
+                  {editingPlaylist.tracks?.length || 0} canciones
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {editingPlaylist.tracks && editingPlaylist.tracks.length > 0 ? (
+                  editingPlaylist.tracks.map((track, idx) => (
+                    <div 
+                      key={track.id || idx}
+                      className="p-3.5 rounded-lg bg-black border border-zinc-800 space-y-2 hover:border-zinc-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-xs text-zinc-500 w-5">
+                            {String(idx + 1).padStart(2, '0')}
+                          </span>
+                          <div>
+                            <span className="text-xs font-semibold text-white">{track.title}</span>
+                            <span className="text-xs text-zinc-400 ml-2">por {track.artist}</span>
+                            {track.album && <span className="text-xs text-zinc-600 ml-2 font-mono">• {track.album}</span>}
+                          </div>
+                        </div>
+
+                        {track.plays !== undefined && track.plays > 0 && (
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">
+                            <Play className="w-2.5 h-2.5 text-zinc-400 fill-zinc-400" />
+                            <span>{track.plays} streams</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Escribe una nota curatorial para este tema (ej. por qué fue clave en este semestre)..."
+                          value={track.notes || ''}
+                          onChange={(e) => handleUpdateTrackNote(idx, e.target.value)}
+                          className="w-full px-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-sans italic"
+                        />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-xs font-mono text-zinc-500">
+                    No hay pistas cargadas en esta playlist.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Botón de Guardado */}
+            <div className="pt-6 border-t border-zinc-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
+                className="px-4 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono uppercase text-zinc-400 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors flex items-center gap-2 shadow-lg"
+              >
+                <Save className="w-4 h-4" />
+                <span>Guardar Personalización en Base de Datos</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PESTAÑA: MIS PLAYLISTS DE TUNE TRACKER */}
+      {/* ======================================================== */}
+      {adminTab === 'playlists' && !isFormOpen && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800 gap-3 flex-wrap">
+            <div>
+              <h2 className="text-sm font-semibold uppercase font-mono tracking-wider text-white flex items-center gap-2">
+                <Layers className="w-4 h-4 text-zinc-400" />
+                <span>Playlists Sincronizadas desde Tune Tracker ({playlists.length})</span>
+              </h2>
+              <p className="text-xs text-zinc-400 font-sans mt-0.5">
+                Playlists registradas en la tabla <code className="text-zinc-300 font-mono">spotitracker_curator</code> en Supabase.
               </p>
             </div>
 
             <button
-              type="button"
-              onClick={() => setAdminTab('playlists')}
-              className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white"
+              onClick={loadPlaylists}
+              disabled={syncing}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-xs font-mono text-zinc-300 hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Volver</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-zinc-400 ${syncing ? 'animate-spin' : ''}`} />
+              <span>Sincronizar ahora</span>
             </button>
+          </div>
+
+          <div className="space-y-4">
+            {playlists.length > 0 ? (
+              playlists.map((playlist) => {
+                const totalStreams = (playlist.tracks || []).reduce((acc, t) => acc + (t.plays || 0), 0);
+                const notesCount = (playlist.tracks || []).filter(t => t.notes && t.notes.trim().length > 0).length;
+
+                return (
+                  <div
+                    key={playlist.id}
+                    className="p-5 rounded-xl bg-[#121215] border border-zinc-800 hover:border-zinc-700 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl"
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Portada Mini */}
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-black border border-zinc-800 flex-shrink-0 flex items-center justify-center">
+                        {playlist.cover_url ? (
+                          <Image src={playlist.cover_url} alt="Cover" fill className="object-cover" />
+                        ) : (
+                          <Disc className="w-8 h-8 text-zinc-700" />
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-[11px] font-mono uppercase text-zinc-400">
+                          <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
+                            {playlist.release_type || 'Semestral'}
+                          </span>
+                          {playlist.period_str && (
+                            <>
+                              <span>•</span>
+                              <span>{playlist.period_str}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <h3 className="text-base font-semibold text-white font-sans">
+                          {playlist.title}
+                        </h3>
+
+                        <div className="flex items-center gap-3 text-xs font-mono text-zinc-500">
+                          <span>{playlist.tracks?.length || 0} canciones</span>
+                          {totalStreams > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-zinc-400 flex items-center gap-1">
+                                <Play className="w-2.5 h-2.5" />
+                                {totalStreams} streams
+                              </span>
+                            </>
+                          )}
+                          {notesCount > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-zinc-300">{notesCount} notas escritas</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones de Acción */}
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <Link
+                        href={`/playlist/${playlist.slug}`}
+                        className="px-3 py-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-400 hover:text-white transition-colors flex items-center gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Ver Vista Pública</span>
+                      </Link>
+
+                      <button
+                        onClick={() => handleEdit(playlist)}
+                        className="px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors flex items-center gap-1.5 shadow"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Editar Personalización</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-16 text-center border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40 space-y-3">
+                <Disc className="w-10 h-10 text-zinc-600 mx-auto" />
+                <p className="font-mono text-xs text-zinc-400">
+                  No se encontraron playlists en la base de datos de Tune Tracker.
+                </p>
+                <p className="text-xs text-zinc-600 max-w-sm mx-auto font-sans">
+                  Asegúrate de haber guardado tu selección semestral con "Guardar en la Nube" desde Tune Tracker.
+                </p>
+                <button
+                  onClick={loadPlaylists}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-zinc-300 hover:text-white"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Reintentar Sincronización</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* PESTAÑA: PERFIL DEL CURADOR */}
+      {/* ======================================================== */}
+      {adminTab === 'profile' && !isFormOpen && (
+        <div className="max-w-2xl bg-[#121215] border border-zinc-800 rounded-xl p-6 sm:p-8 space-y-6 shadow-2xl">
+          <div className="pb-4 border-b border-zinc-800">
+            <h2 className="text-base font-semibold uppercase font-mono tracking-wider text-white flex items-center gap-2">
+              <Settings className="w-4 h-4 text-zinc-400" />
+              <span>Perfil de Curador</span>
+            </h2>
+            <p className="text-xs text-zinc-400 font-sans mt-1">
+              Personaliza cómo te ves en Molva como creador de Tune Tracker.
+            </p>
           </div>
 
           <form onSubmit={handleSaveProfile} className="space-y-6">
             <div>
               <label className="block text-xs font-mono uppercase text-zinc-400 mb-2">
-                Foto de Perfil / Avatar
+                Foto de Perfil / Avatar:
               </label>
               <div className="flex items-center gap-5">
                 <div className="relative w-16 h-16 rounded-full overflow-hidden bg-black border border-zinc-700 flex-shrink-0 flex items-center justify-center">
@@ -774,7 +969,7 @@ export default function AdminPage() {
                       className="px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-700 hover:border-zinc-500 text-xs font-mono text-zinc-200 transition-colors flex items-center gap-1.5"
                     >
                       <UploadCloud className="w-3.5 h-3.5" />
-                      <span>Subir Imagen</span>
+                      <span>Subir Foto</span>
                     </button>
                     {userProfile.avatarUrl && (
                       <button
@@ -800,656 +995,78 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                  Nombre a Mostrar
+                  Nombre Público:
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="ej. Alexander Vance"
                   value={userProfile.displayName || ''}
                   onChange={(e) => setUserProfile({ ...userProfile, displayName: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500"
+                  className="w-full px-3 py-2 bg-black border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-500"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                  Nombre de Usuario (@)
+                  Usuario (@):
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="ej. alexander_vance"
+                  disabled
                   value={userProfile.username}
-                  onChange={(e) => setUserProfile({ ...userProfile, username: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500 font-mono"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-900 rounded text-xs font-mono text-zinc-500 cursor-not-allowed"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                Biografía / Manifiesto Musical
-              </label>
-              <textarea
-                rows={3}
-                placeholder="Breve descripción de tus influencias, gustos o criterio de selección..."
-                value={userProfile.bio || ''}
-                onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
-                className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-sans"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-500 mb-1">
-                  Enlace a Perfil de Spotify:
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                  Enlace de Spotify:
                 </label>
                 <input
                   type="url"
                   placeholder="https://open.spotify.com/user/..."
                   value={userProfile.spotifyUrl || ''}
                   onChange={(e) => setUserProfile({ ...userProfile, spotifyUrl: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-800 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                  className="w-full px-3 py-2 bg-black border border-zinc-800 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-500 mb-1">
-                  Enlace a Last.fm o Web:
+                <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                  Enlace de Last.fm:
                 </label>
                 <input
                   type="url"
-                  placeholder="https://last.fm/user/..."
+                  placeholder="https://www.last.fm/user/Vrak_23"
                   value={userProfile.lastfmUrl || ''}
                   onChange={(e) => setUserProfile({ ...userProfile, lastfmUrl: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-black border border-zinc-800 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
+                  className="w-full px-3 py-2 bg-black border border-zinc-800 rounded text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setAdminTab('playlists')}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-zinc-900 text-xs font-mono text-zinc-400 hover:text-white"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Volver a Lanzamientos</span>
-              </button>
+            <div>
+              <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
+                Biografía del Curador:
+              </label>
+              <textarea
+                rows={3}
+                value={userProfile.bio || ''}
+                onChange={(e) => setUserProfile({ ...userProfile, bio: e.target.value })}
+                className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-500 font-sans"
+              />
+            </div>
 
+            <div className="pt-4 border-t border-zinc-800 flex justify-end">
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
+                className="px-5 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors flex items-center gap-2"
               >
-                Guardar Perfil
+                <Save className="w-3.5 h-3.5" />
+                <span>Guardar Cambios</span>
               </button>
             </div>
           </form>
         </div>
-      )}
-
-      {/* PESTAÑA LANZAMIENTOS */}
-      {adminTab === 'playlists' && (
-        <>
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase font-mono tracking-wider text-white">
-              Mis Lanzamientos ({playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length})
-            </h2>
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors"
-              >
-                <DownloadCloud className="w-3.5 h-3.5" />
-                <span>Importar Enlace</span>
-              </button>
-
-              <button
-                onClick={handleCreateNew}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Nuevo Lanzamiento</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Modal de Importación */}
-          {isImportModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fadeIn">
-              <div className="max-w-lg w-full bg-[#121215] border border-zinc-800 rounded-xl p-6 space-y-5 shadow-2xl">
-                <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                  <h3 className="text-sm font-semibold text-white uppercase tracking-wider font-mono">
-                    Importar Playlist como Lanzamiento
-                  </h3>
-                  <button 
-                    onClick={() => setIsImportModalOpen(false)}
-                    className="text-zinc-500 hover:text-white text-xs font-mono"
-                  >
-                    Cerrar [ESC]
-                  </button>
-                </div>
-
-                <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-                  Pega un enlace de Spotify o YouTube para autorellenar la portada, el título y todas las canciones del lanzamiento automáticamente.
-                </p>
-
-                <form onSubmit={handleImport} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-mono text-zinc-400 mb-1.5 uppercase">
-                      URL de la Playlist:
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      placeholder="https://open.spotify.com/playlist/... o https://youtube.com/playlist?list=..."
-                      value={importUrl}
-                      onChange={(e) => setImportUrl(e.target.value)}
-                      className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono"
-                    />
-                  </div>
-
-                  {importError && (
-                    <div className="text-xs font-mono text-red-400 bg-red-950/40 p-2.5 rounded border border-red-900/60">
-                      {importError}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsImportModalOpen(false)}
-                      className="px-3.5 py-2 rounded-lg bg-zinc-900 text-xs font-mono text-zinc-400 hover:text-white"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={importing}
-                      className="px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 disabled:opacity-50"
-                    >
-                      {importing ? 'Extrayendo canciones...' : 'Procesar e Importar'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Formulario de Lanzamiento */}
-          {isFormOpen && editingPlaylist && (
-            <div className="bg-[#121215] border border-zinc-700 rounded-xl p-6 sm:p-8 space-y-8 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
-                    className="p-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                    title="Volver a la lista"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                  </button>
-                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                    <Edit3 className="w-4 h-4 text-zinc-400" />
-                    <span>{editingPlaylist.title ? `Editando: ${editingPlaylist.title}` : 'Nuevo Lanzamiento'}</span>
-                  </h2>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
-                  className="text-xs font-mono text-zinc-500 hover:text-white"
-                >
-                  Cancelar y Cerrar
-                </button>
-              </div>
-
-              <form onSubmit={handleSave} className="space-y-8">
-                {/* 1. Metadatos de Lanzamiento */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-black/40 border border-zinc-800 rounded-lg">
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                      Tipo de Formato *
-                    </label>
-                    <select
-                      value={editingPlaylist.release_type}
-                      onChange={(e) => setEditingPlaylist({ ...editingPlaylist, release_type: e.target.value as ReleaseType })}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500 font-mono"
-                    >
-                      {RELEASE_TYPES.map(type => (
-                        <option key={type} value={type}>{type} (Lanzamiento)</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                      Fecha de Creación / Lanzamiento *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={editingPlaylist.release_date}
-                      onChange={(e) => setEditingPlaylist({ ...editingPlaylist, release_date: e.target.value })}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500 font-mono"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                      Código de Catálogo (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="ej. CANON-001"
-                      value={editingPlaylist.catalog_number || ''}
-                      onChange={(e) => setEditingPlaylist({ ...editingPlaylist, catalog_number: e.target.value })}
-                      className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-zinc-500 font-mono"
-                    />
-                  </div>
-
-                  {editingPlaylist.release_type === 'Single' && (
-                    <div className="md:col-span-3 pt-3 border-t border-zinc-800">
-                      <label className="block text-[11px] font-mono uppercase text-zinc-300 mb-1">
-                        Álbum / Playlist a la que pertenecerá este Single (Adelanto):
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="ej. Nocturnas de Otoño (nombre del próximo lanzamiento / álbum)"
-                        value={editingPlaylist.upcoming_album || ''}
-                        onChange={(e) => setEditingPlaylist({ ...editingPlaylist, upcoming_album: e.target.value })}
-                        className="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
-                      />
-                      <p className="text-[11px] font-mono text-zinc-500 mt-1">
-                        Se etiquetará en el catálogo como Single / Adelanto del próximo lanzamiento.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. Información Principal y Portada */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                        Título del Álbum / Playlist *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={editingPlaylist.title}
-                        onChange={(e) => setEditingPlaylist({ ...editingPlaylist, title: e.target.value })}
-                        placeholder="Ej. Nocturnas de Otoño"
-                        className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-zinc-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                        Slug / Identificador URL
-                      </label>
-                      <input
-                        type="text"
-                        value={editingPlaylist.slug}
-                        onChange={(e) => setEditingPlaylist({ ...editingPlaylist, slug: e.target.value })}
-                        placeholder="ej. nocturnas-de-otono"
-                        className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                        Subtítulo / Breve Resumen
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={editingPlaylist.description || ''}
-                        onChange={(e) => setEditingPlaylist({ ...editingPlaylist, description: e.target.value })}
-                        placeholder="Atmósfera, concepto y selección sonora..."
-                        className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-zinc-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                        Etiquetas / Géneros (separados por coma)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingPlaylist.tags ? editingPlaylist.tags.join(', ') : ''}
-                        onChange={(e) => setEditingPlaylist({ 
-                          ...editingPlaylist, 
-                          tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) 
-                        })}
-                        placeholder="Ambient, Post-Punk, Jazz"
-                        className="w-full px-3.5 py-2 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Artwork & Ambient Color */}
-                  <div className="space-y-4">
-                    <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                      Artwork / Portada Oficial
-                    </label>
-                    
-                    <div className="flex gap-4 items-start">
-                      <div className="relative w-32 h-32 bg-black rounded-lg border border-zinc-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                        {editingPlaylist.cover_url ? (
-                          <Image
-                            src={editingPlaylist.cover_url}
-                            alt="Preview"
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <Disc className="w-8 h-8 text-zinc-700" />
-                        )}
-                      </div>
-
-                      <div className="flex-1 space-y-3">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleImageUpload}
-                          accept="image/*"
-                          className="hidden"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 rounded-lg text-xs font-mono text-zinc-200 transition-colors"
-                        >
-                          <UploadCloud className="w-3.5 h-3.5" />
-                          <span>Cargar Imagen</span>
-                        </button>
-
-                        <div>
-                          <input
-                            type="url"
-                            placeholder="O pegar URL de imagen..."
-                            value={editingPlaylist.cover_url || ''}
-                            onChange={async (e) => {
-                              const url = e.target.value;
-                              const color = url ? await extractDominantColor(url) : '#262626';
-                              setEditingPlaylist({ ...editingPlaylist, cover_url: url, dominant_color: color });
-                            }}
-                            className="w-full px-3 py-1.5 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-mono text-zinc-500">Color Ambient:</span>
-                          <input
-                            type="color"
-                            value={editingPlaylist.dominant_color || '#262626'}
-                            onChange={(e) => setEditingPlaylist({ ...editingPlaylist, dominant_color: e.target.value })}
-                            className="w-7 h-7 rounded border border-zinc-700 bg-transparent cursor-pointer"
-                          />
-                          <span className="text-[11px] font-mono text-zinc-400">{editingPlaylist.dominant_color}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Enlaces de Streaming */}
-                    <div className="grid grid-cols-1 gap-3 pt-2">
-                      <div>
-                        <label className="block text-[11px] font-mono uppercase text-zinc-500 mb-1">
-                          Enlace a Playlist en Spotify:
-                        </label>
-                        <input
-                          type="url"
-                          value={editingPlaylist.spotify_url || ''}
-                          onChange={(e) => setEditingPlaylist({ ...editingPlaylist, spotify_url: e.target.value })}
-                          placeholder="https://open.spotify.com/playlist/..."
-                          className="w-full px-3 py-1.5 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-mono uppercase text-zinc-500 mb-1">
-                          Enlace a Playlist en YouTube:
-                        </label>
-                        <input
-                          type="url"
-                          value={editingPlaylist.youtube_url || ''}
-                          onChange={(e) => setEditingPlaylist({ ...editingPlaylist, youtube_url: e.target.value })}
-                          placeholder="https://www.youtube.com/playlist?list=..."
-                          className="w-full px-3 py-1.5 bg-black border border-zinc-800 rounded-lg text-xs font-mono text-zinc-300 focus:outline-none focus:border-zinc-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Liner Notes */}
-                <div>
-                  <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-                    Liner Notes / Historia y Concepto del Lanzamiento:
-                  </label>
-                  <textarea
-                    rows={5}
-                    value={editingPlaylist.story || ''}
-                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, story: e.target.value })}
-                    placeholder="El libreto del álbum: origen de la selección, significado conceptual, proceso de curaduría..."
-                    className="w-full px-4 py-3 bg-black border border-zinc-800 rounded-lg text-sm text-zinc-200 leading-relaxed focus:outline-none focus:border-zinc-500"
-                  />
-                </div>
-
-                {/* 4. Tracklist con Notas */}
-                <div className="space-y-4 pt-4 border-t border-zinc-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold uppercase font-mono tracking-wider text-white">
-                        Tracklist Oficial ({editingPlaylist.tracks?.length || 0} canciones)
-                      </h3>
-                      <p className="text-xs text-zinc-500 font-mono">
-                        Notas individuales por canción
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleAddTrack}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-zinc-900 border border-zinc-700 text-xs font-mono text-zinc-200 hover:text-white hover:border-zinc-500 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Añadir Canción</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(editingPlaylist.tracks || []).map((track, idx) => (
-                      <div 
-                        key={track.id || idx}
-                        className="p-4 bg-black/60 border border-zinc-800 rounded-lg space-y-3 relative group/track"
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono text-zinc-500 w-6">
-                              #{String(idx + 1).padStart(2, '0')}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                disabled={idx === 0}
-                                onClick={() => handleMoveTrack(idx, 'up')}
-                                className="p-1 text-zinc-500 hover:text-white disabled:opacity-20"
-                                title="Subir posición"
-                              >
-                                <ArrowUp className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={idx === (editingPlaylist.tracks?.length || 1) - 1}
-                                onClick={() => handleMoveTrack(idx, 'down')}
-                                className="p-1 text-zinc-500 hover:text-white disabled:opacity-20"
-                                title="Bajar posición"
-                              >
-                                <ArrowDown className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveTrack(idx)}
-                            className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
-                            title="Eliminar tema"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Título de la Canción"
-                              value={track.title}
-                              onChange={(e) => handleUpdateTrack(idx, 'title', e.target.value)}
-                              className="w-full px-3 py-1.5 bg-[#121215] border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-500"
-                            />
-                          </div>
-                          <div>
-                            <input
-                              type="text"
-                              required
-                              placeholder="Artista / Intérprete"
-                              value={track.artist}
-                              onChange={(e) => handleUpdateTrack(idx, 'artist', e.target.value)}
-                              className="w-full px-3 py-1.5 bg-[#121215] border border-zinc-800 rounded text-xs text-white focus:outline-none focus:border-zinc-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <input
-                            type="text"
-                            placeholder="Nota o memoria sobre este track (opcional)..."
-                            value={track.notes || ''}
-                            onChange={(e) => handleUpdateTrack(idx, 'notes', e.target.value)}
-                            className="w-full px-3 py-1.5 bg-[#121215] border border-zinc-800 rounded text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 italic"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Botones Inferiores de Acción */}
-                <div className="flex items-center justify-between pt-6 border-t border-zinc-800">
-                  <button
-                    type="button"
-                    onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-zinc-900 text-xs font-mono text-zinc-400 hover:text-white transition-colors border border-zinc-800 hover:border-zinc-600"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Volver a la Lista</span>
-                  </button>
-
-                  <button
-                    type="submit"
-                    className="px-6 py-2.5 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
-                  >
-                    Publicar Lanzamiento
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Lista de Lanzamientos del Usuario */}
-          <div className="bg-[#121215] border border-zinc-800 rounded-xl overflow-hidden shadow-xl">
-            <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-              <h2 className="text-xs font-mono uppercase tracking-wider text-zinc-400">
-                Mis Lanzamientos Publicados ({playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length})
-              </h2>
-            </div>
-
-            <div className="divide-y divide-zinc-800/60">
-              {playlists
-                .filter(p => isUserCreator(p.creator_username, userProfile.username))
-                .map((playlist) => (
-                <div 
-                  key={playlist.id} 
-                  className="p-3.5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 hover:bg-zinc-900/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                    <div className="relative w-12 h-12 rounded bg-black border border-zinc-800 overflow-hidden flex-shrink-0">
-                      {playlist.cover_url ? (
-                        <Image
-                          src={playlist.cover_url}
-                          alt={playlist.title}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-700">
-                          <Disc className="w-5 h-5" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-[10px] font-mono text-zinc-400 flex-shrink-0">
-                          {playlist.release_type || 'LP'}
-                        </span>
-                        <h3 className="text-sm font-semibold text-white truncate">
-                          {playlist.title}
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 mt-0.5 truncate">
-                        <span>@{playlist.creator_username || userProfile.username}</span>
-                        <span>•</span>
-                        <span>{playlist.tracks?.length || 0} tracks</span>
-                        <span>•</span>
-                        <span>{playlist.release_date || 'Sin fecha'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/40 w-full sm:w-auto justify-end">
-                    <Link
-                      href={`/playlist/${playlist.slug}`}
-                      target="_blank"
-                      className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                      title="Ver lanzamiento"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
-
-                    <button
-                      onClick={() => handleEdit(playlist)}
-                      className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors"
-                      title="Editar"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(playlist.id, playlist.title)}
-                      className="p-2 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-red-400 transition-colors"
-                      title="Eliminar"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {playlists.filter(p => isUserCreator(p.creator_username, userProfile.username)).length === 0 && (
-                <div className="py-12 text-center text-xs font-mono text-zinc-500">
-                  Aún no has publicado ningún lanzamiento con esta cuenta. Haz clic en "Nuevo Lanzamiento" o "Importar Enlace" para publicar el primero.
-                </div>
-              )}
-            </div>
-          </div>
-        </>
       )}
     </div>
   );

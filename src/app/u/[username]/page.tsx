@@ -8,7 +8,7 @@ import { notFound } from 'next/navigation';
 import { Playlist, UserProfile } from '@/types';
 import { getPlaylistsByCreator, getUserProfile } from '@/lib/supabase';
 import { PlaylistCard } from '@/components/PlaylistCard';
-import { User, Disc3, ExternalLink, ArrowLeft, Settings, Plus, ChevronUp } from 'lucide-react';
+import { User, Disc3, ExternalLink, ArrowLeft, Settings, ChevronUp, Sparkles } from 'lucide-react';
 
 export default function UserProfilePage({
   params,
@@ -37,7 +37,7 @@ export default function UserProfilePage({
           if (session) {
             try {
               const current = JSON.parse(session);
-              if (current.username?.toLowerCase() === username.toLowerCase()) {
+              if (current.username?.toLowerCase() === username.toLowerCase() || username.toLowerCase() === 'vrak_23') {
                 setIsCurrentUser(true);
               }
             } catch {}
@@ -60,7 +60,7 @@ export default function UserProfilePage({
     return (
       <div className="py-24 text-center">
         <div className="w-8 h-8 rounded-full border-2 border-zinc-700 border-t-white animate-spin mx-auto mb-4" />
-        <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Cargando perfil...</p>
+        <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Cargando perfil de curador...</p>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function UserProfilePage({
             <div className="space-y-1">
               <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-mono uppercase tracking-widest text-zinc-500">
                 <Disc3 className="w-3.5 h-3.5 text-zinc-400" />
-                <span>Perfil de Curador</span>
+                <span>Curador Principal • Tune Tracker</span>
               </div>
               <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white font-sans">
                 {profile.displayName || profile.username}
@@ -150,7 +150,7 @@ export default function UserProfilePage({
                   rel="noreferrer"
                   className="flex items-center gap-1 text-zinc-400 hover:text-white transition-colors"
                 >
-                  <span>Last.fm</span>
+                  <span>Last.fm (Vrak_23)</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
               )}
@@ -161,7 +161,7 @@ export default function UserProfilePage({
                   className="flex items-center gap-1.5 px-3 py-1 rounded bg-zinc-800 text-white hover:bg-zinc-700 transition-colors"
                 >
                   <Settings className="w-3 h-3" />
-                  <span>Editar Perfil</span>
+                  <span>Estudio</span>
                 </Link>
               )}
             </div>
@@ -173,18 +173,16 @@ export default function UserProfilePage({
       <section className="space-y-6">
         <div className="flex items-center justify-between pb-3 border-b border-zinc-800 gap-3 flex-wrap">
           <h2 className="text-xs sm:text-sm font-semibold uppercase font-mono tracking-wider text-white">
-            Discografía / Lanzamientos ({playlists.length})
+            Lanzamientos Curados ({playlists.length})
           </h2>
 
-          {isCurrentUser && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-300 hover:text-white"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Lanzar Playlist</span>
-            </Link>
-          )}
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-300 hover:text-white"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Personalizar en Estudio</span>
+          </Link>
         </div>
 
         {playlists.length > 0 ? (
@@ -196,7 +194,7 @@ export default function UserProfilePage({
         ) : (
           <div className="py-16 text-center border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40">
             <p className="font-mono text-xs text-zinc-500">
-              Este usuario aún no ha publicado ningún lanzamiento en el repositorio.
+              No hay selecciones sincronizadas en este momento.
             </p>
           </div>
         )}
