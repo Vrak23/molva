@@ -21,7 +21,6 @@ import {
   Check, 
   User, 
   Clock, 
-  ExternalLink,
   ChevronUp,
   Play,
   Settings,
@@ -252,35 +251,6 @@ export default function PlaylistDetailPage({
             <p className="text-xs sm:text-sm text-[#8c8c96] font-sans leading-relaxed max-w-2xl pt-1">
               {playlist.description}
             </p>
-          )}
-
-          {/* Botones de Escucha en Plataformas */}
-          {(playlist.spotify_url || playlist.youtube_url) && (
-            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
-              {playlist.spotify_url && (
-                <a
-                  href={playlist.spotify_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all shadow-[0_0_16px_rgba(255,255,255,0.25)]"
-                >
-                  <Play className="w-3.5 h-3.5 fill-black" />
-                  <span>Escuchar en Spotify</span>
-                  <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              )}
-              {playlist.youtube_url && (
-                <a
-                  href={playlist.youtube_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#121217] border border-white/[0.12] hover:border-white/30 text-white font-semibold text-xs font-mono uppercase tracking-wider transition-all"
-                >
-                  <span>YouTube Music</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
-            </div>
           )}
         </div>
       </section>
