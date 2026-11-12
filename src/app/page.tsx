@@ -116,58 +116,21 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8 sm:space-y-12">
-      {/* Portada / Hero del Visualizador Estilo Tidal Editorial */}
-      <section className="pt-2 pb-6 sm:pb-8 border-b border-white/[0.08]">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-          <div className="space-y-2.5 max-w-2xl">
-            <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-[#8c8c96]">
-              <span className="w-1.5 h-1.5 bg-cyan-400 rotate-45 shadow-[0_0_6px_rgba(0,240,255,0.7)]" />
-              <span>Colección Oficial • Tune Tracker</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white font-sans">
-              Playlists & <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400">Lanzamientos</span>
-            </h1>
-
-            <p className="text-xs sm:text-sm text-[#8c8c96] leading-relaxed font-sans">
-              Repositorio de selecciones semestrales concebidas como lanzamientos discográficos completos: fichas técnicas, memoria conceptual y conteo de streams analíticos.
-            </p>
+      {/* Encabezado Editorial Limpio */}
+      <section className="pt-2 pb-5 border-b border-white/[0.08]">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#8c8c96]">
+            <span className="w-1.5 h-1.5 bg-cyan-400 rotate-45 shadow-[0_0_6px_rgba(0,240,255,0.7)]" />
+            <span>Tune Tracker Collection</span>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0e0e13] border border-white/[0.08] hover:border-white/20 text-xs font-mono text-zinc-300 hover:text-white transition-all shadow-sm"
-              title="Sincronizar con Supabase"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-cyan-400 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>Sincronizar</span>
-            </button>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
+            Lanzamientos
+          </h1>
 
-            <Link
-              href="/admin"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all shadow-[0_0_16px_rgba(255,255,255,0.2)]"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>Estudio</span>
-            </Link>
-
-            <div className="px-3 py-2 rounded-lg bg-[#0e0e13] border border-white/[0.08] text-xs font-mono text-[#8c8c96] flex items-center gap-2">
-              <span className="text-white font-semibold tabular-nums">{playlists.length}</span>
-              <span>lanzamientos</span>
-              <span className="text-zinc-600">•</span>
-              <span className="text-zinc-300 tabular-nums">{totalTracks}</span>
-              <span>temas</span>
-              {totalStreams > 0 && (
-                <>
-                  <span className="text-zinc-600">•</span>
-                  <span className="text-cyan-400 tabular-nums">{totalStreams.toLocaleString('es-ES')}</span>
-                  <span>streams</span>
-                </>
-              )}
-            </div>
-          </div>
+          <p className="text-xs sm:text-sm text-[#8c8c96] font-sans">
+            Archivo sonoro y curaduría discográfica personal.
+          </p>
         </div>
       </section>
 

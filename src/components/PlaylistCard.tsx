@@ -62,28 +62,9 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
         {/* Gradiente oscuro inferior para legibilidad */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
 
-        {/* Badge de Formato Discográfico Superior */}
-        <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-md px-2.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest text-white border border-white/10 shadow-lg">
-          {playlist.release_type || 'Semestral'}
-        </div>
-
         {/* Botón Flotante Play Estilo Tidal (Aparece en Hover) */}
         <div className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.6)] transform translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
           <Play className="w-4 h-4 fill-black text-black ml-0.5" />
-        </div>
-
-        {/* Badges Inferiores Izquierdos: Pistas y Streams */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-1.5 transition-transform duration-300 group-hover:translate-x-1">
-          {totalStreams > 0 && (
-            <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-zinc-300 border border-white/10 flex items-center gap-1">
-              <Play className="w-2.5 h-2.5 text-cyan-400 fill-cyan-400" />
-              <span className="tabular-nums">{totalStreams.toLocaleString('es-ES')}</span>
-            </div>
-          )}
-          <div className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-zinc-300 border border-white/10 flex items-center gap-1">
-            <Music2 className="w-2.5 h-2.5 text-zinc-400" />
-            <span>{trackCount}</span>
-          </div>
         </div>
       </Link>
 

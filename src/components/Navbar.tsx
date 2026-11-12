@@ -63,51 +63,20 @@ export function Navbar() {
               <div className="w-2.5 h-2.5 bg-white/70 rotate-45 transform transition-transform group-hover:scale-110" />
             </div>
 
-            <div className="flex flex-col">
-              <span className="text-sm sm:text-base font-bold tracking-[0.22em] text-white font-sans uppercase">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base sm:text-lg font-bold tracking-[0.25em] text-white font-sans uppercase">
                 MOLVA
-              </span>
-              <span className="text-[9px] font-mono tracking-widest text-[#8c8c96] uppercase hidden xs:block -mt-0.5">
-                Tune Tracker Repository
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Lado Derecho: Navegación de Alta Fidelidad */}
-        <nav className="flex items-center gap-2 sm:gap-6 text-xs font-mono uppercase tracking-[0.14em]">
-          <Link 
-            href="/" 
-            className={`px-2.5 py-1.5 rounded transition-all duration-200 relative ${
-              pathname === '/' 
-                ? 'text-white font-semibold' 
-                : 'text-[#8c8c96] hover:text-white'
-            }`}
-          >
-            <span>Explorar</span>
-            {pathname === '/' && (
-              <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
-            )}
-          </Link>
-
-          <Link 
-            href="/u/Vrak_23" 
-            className={`px-2.5 py-1.5 rounded transition-all duration-200 relative ${
-              pathname.startsWith('/u/') 
-                ? 'text-white font-semibold' 
-                : 'text-[#8c8c96] hover:text-white'
-            }`}
-          >
-            <span>Curador</span>
-            {pathname.startsWith('/u/') && (
-              <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
-            )}
-          </Link>
-
+        {/* Lado Derecho: Acceso directo al Estudio */}
+        <nav className="flex items-center">
           {user ? (
             <Link 
               href="/admin" 
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border transition-all ${
                 pathname === '/admin'
                   ? 'bg-white text-black font-semibold border-white shadow-[0_0_12px_rgba(255,255,255,0.3)]'
                   : 'bg-[#121217] border-white/[0.12] text-zinc-200 hover:text-white hover:border-white/30'
@@ -120,18 +89,18 @@ export function Navbar() {
               ) : (
                 <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
               )}
-              <span className="normal-case font-sans font-medium text-xs hidden sm:inline">
+              <span className="normal-case font-sans font-medium text-xs">
                 Estudio
               </span>
             </Link>
           ) : (
             <Link 
               href="/admin" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.12] bg-[#121217] text-[#8c8c96] hover:text-white hover:border-white/30 transition-all"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/[0.12] bg-[#121217] text-[#8c8c96] hover:text-white hover:border-white/30 transition-all text-xs font-mono"
               title="Acceso al Estudio"
             >
               <Lock className="w-3 h-3 text-[#8c8c96]" />
-              <span className="hidden sm:inline">Estudio</span>
+              <span>Estudio</span>
             </Link>
           )}
         </nav>

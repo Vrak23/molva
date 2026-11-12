@@ -289,7 +289,7 @@ export default function PlaylistDetailPage({
         {/* Columna Lateral: Ficha Técnica & Liner Notes */}
         <div className="lg:col-span-4 space-y-6">
           {/* Ficha Técnica Tidal */}
-          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-5 space-y-4 shadow-xl">
+          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-xl p-5 space-y-4 shadow-xl">
             <div className="text-xs font-mono uppercase tracking-[0.16em] text-[#8c8c96] pb-3 border-b border-white/[0.06] flex items-center justify-between">
               <div className="flex items-center gap-2 font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
@@ -359,16 +359,18 @@ export default function PlaylistDetailPage({
 
         {/* Columna Principal: Tracklist Estilo Tabla Tidal */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-4 sm:p-6 space-y-2 shadow-xl">
+          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-xl p-4 sm:p-5 space-y-2 shadow-xl">
             {/* Cabecera de Columnas Estilo Tidal */}
             <div className="flex items-center justify-between px-3 sm:px-4 pb-3 border-b border-white/[0.06] text-[11px] font-mono uppercase tracking-wider text-[#6e6e78]">
               <div className="flex items-center gap-4">
-                <span className="w-6 text-right">#</span>
+                <span className="w-6 text-right font-mono">#</span>
                 <span>Título / Artista</span>
               </div>
               <div className="flex items-center gap-4">
-                <span>Streams</span>
-                <span className="hidden sm:inline w-12 text-right">Tiempo</span>
+                <span>Reproducciones</span>
+                {playlist.tracks?.some(t => Boolean(t.duration_ms)) && (
+                  <span className="hidden sm:inline w-12 text-right">Tiempo</span>
+                )}
               </div>
             </div>
 
