@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Disc, User, Lock, Sparkles } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import { UserProfile } from '@/types';
 
 export function Navbar() {
@@ -21,7 +21,6 @@ export function Navbar() {
       }
     } catch {}
 
-    // Fallback de sesión local
     const localSession = localStorage.getItem('canon_user_session');
     if (localSession) {
       try {
@@ -50,72 +49,89 @@ export function Navbar() {
   }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#09090b]/85 border-b border-[#27272a]/60">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Lado Izquierdo: Logo */}
+    <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#060608]/80 border-b border-white/[0.08] transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between">
+        {/* Lado Izquierdo: Logotipo Estilo Tidal (Rombo Geométrico) */}
         <div className="flex items-center gap-4">
           <Link 
             href="/" 
-            className="flex items-center gap-2.5 sm:gap-3 group transition-opacity hover:opacity-85"
+            className="flex items-center gap-3 group transition-opacity hover:opacity-90"
           >
-            <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center bg-black/40 flex-shrink-0 group-hover:border-white/50 transition-colors">
-              <Disc className="w-4 h-4 text-white" />
+            {/* Ícono de rombos geométricos inspirado en Tidal */}
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 bg-white rotate-45 transform transition-transform group-hover:scale-110 shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
+              <div className="w-2.5 h-2.5 bg-white/70 rotate-45 transform transition-transform group-hover:scale-110" />
             </div>
+
             <div className="flex flex-col">
-              <span className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase hidden xs:block">Repositorio Sonoro</span>
-              <span className="text-sm font-semibold tracking-tight text-white font-sans">MOLVA</span>
+              <span className="text-sm sm:text-base font-bold tracking-[0.22em] text-white font-sans uppercase">
+                MOLVA
+              </span>
+              <span className="text-[9px] font-mono tracking-widest text-[#8c8c96] uppercase hidden xs:block -mt-0.5">
+                Tune Tracker Repository
+              </span>
             </div>
           </Link>
         </div>
 
-        {/* Lado Derecho: Navegación */}
-        <nav className="flex items-center gap-3 sm:gap-4 text-xs font-mono uppercase tracking-wider">
+        {/* Lado Derecho: Navegación de Alta Fidelidad */}
+        <nav className="flex items-center gap-2 sm:gap-6 text-xs font-mono uppercase tracking-[0.14em]">
           <Link 
             href="/" 
-            className={`transition-colors ${pathname === '/' ? 'text-white font-semibold' : 'text-zinc-400 hover:text-white'}`}
+            className={`px-2.5 py-1.5 rounded transition-all duration-200 relative ${
+              pathname === '/' 
+                ? 'text-white font-semibold' 
+                : 'text-[#8c8c96] hover:text-white'
+            }`}
           >
-            Explorar
+            <span>Explorar</span>
+            {pathname === '/' && (
+              <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
+            )}
           </Link>
-
-          <span className="text-zinc-700">/</span>
 
           <Link 
             href="/u/Vrak_23" 
-            className={`transition-colors ${pathname.startsWith('/u/') ? 'text-white font-semibold' : 'text-zinc-400 hover:text-white'}`}
+            className={`px-2.5 py-1.5 rounded transition-all duration-200 relative ${
+              pathname.startsWith('/u/') 
+                ? 'text-white font-semibold' 
+                : 'text-[#8c8c96] hover:text-white'
+            }`}
           >
-            Curador
+            <span>Curador</span>
+            {pathname.startsWith('/u/') && (
+              <span className="absolute bottom-0 left-2.5 right-2.5 h-[2px] bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
+            )}
           </Link>
-
-          <span className="text-zinc-700">/</span>
 
           {user ? (
             <Link 
               href="/admin" 
-              className={`flex items-center gap-2 px-2.5 py-1 rounded-md border transition-all ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
                 pathname === '/admin'
-                  ? 'bg-zinc-800 border-zinc-600 text-white font-medium'
-                  : 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-600'
+                  ? 'bg-white text-black font-semibold border-white shadow-[0_0_12px_rgba(255,255,255,0.3)]'
+                  : 'bg-[#121217] border-white/[0.12] text-zinc-200 hover:text-white hover:border-white/30'
               }`}
             >
               {user.avatarUrl ? (
-                <div className="relative w-4 h-4 rounded-full overflow-hidden border border-zinc-600 flex-shrink-0">
+                <div className="relative w-4 h-4 rounded-full overflow-hidden border border-zinc-700 flex-shrink-0">
                   <Image src={user.avatarUrl} alt="Avatar" fill className="object-cover" />
                 </div>
               ) : (
                 <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
               )}
-              <span className="normal-case font-sans font-medium text-xs">
+              <span className="normal-case font-sans font-medium text-xs hidden sm:inline">
                 Estudio
               </span>
             </Link>
           ) : (
             <Link 
               href="/admin" 
-              className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors"
-              title="Acceso al panel de curaduría"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/[0.12] bg-[#121217] text-[#8c8c96] hover:text-white hover:border-white/30 transition-all"
+              title="Acceso al Estudio"
             >
-              <Lock className="w-3.5 h-3.5 text-zinc-500" />
-              <span>Estudio</span>
+              <Lock className="w-3 h-3 text-[#8c8c96]" />
+              <span className="hidden sm:inline">Estudio</span>
             </Link>
           )}
         </nav>

@@ -4,8 +4,8 @@ import { Navbar } from '@/components/Navbar';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Molva — Plataforma de Playlists & Lanzamientos Sonoros',
-  description: 'Comunidad abierta de curadores musicales, lanzamientos tipo álbum, conceptos y notas de producción.',
+  title: 'Molva — Visualizador & Repositorio de Playlists • Tune Tracker',
+  description: 'Colección discográfica y repositorio sonoro de playlists curadas en Tune Tracker.',
 };
 
 export default function RootLayout({
@@ -14,42 +14,45 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark">
-      <body className="bg-[#09090b] text-[#fafafa] flex flex-col min-h-screen selection:bg-white selection:text-black">
-        {/* Cabecera de Plataforma */}
+    <html lang="es" className="dark scroll-smooth">
+      <body className="bg-[#060608] text-[#ffffff] flex flex-col min-h-screen selection:bg-white selection:text-black antialiased font-sans">
+        {/* Barra de Navegación Tidal */}
         <Navbar />
 
-        {/* Contenido Principal */}
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 relative">
+        {/* Contenido Principal con espaciado fluido y responsive */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10 relative z-10">
           {children}
         </main>
 
-        {/* Pie de Página */}
-        <footer className="w-full border-t border-[#27272a]/40 py-8 mt-12 sm:mt-20 text-xs font-mono text-zinc-500">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
-              <span>Molva • Plataforma Comunitaria de Playlists & Lanzamientos</span>
+        {/* Pie de Página Estilo Tidal */}
+        <footer className="w-full border-t border-white/[0.07] bg-[#060608]/90 py-8 sm:py-10 mt-16 sm:mt-24 text-xs font-mono text-[#8c8c96]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-block w-2 h-2 rounded-sm bg-white rotate-45 shadow-[0_0_8px_rgba(255,255,255,0.4)]"></span>
+              <span className="tracking-wider uppercase text-zinc-300 font-semibold text-[11px]">Molva</span>
+              <span className="text-zinc-600">•</span>
+              <span className="text-zinc-400">Visualizador Oficial de Curadurías Tune Tracker</span>
             </div>
-            <div className="flex items-center gap-4 text-zinc-500">
-              <span>Edición Minimalista B&W</span>
-              <span>•</span>
+
+            <div className="flex items-center gap-4 sm:gap-6 text-zinc-400">
+              <span className="text-[11px] uppercase tracking-widest text-zinc-500">Tidal Black Edition</span>
+              <span className="text-zinc-700">•</span>
               <a 
                 href="https://spotify.com" 
                 target="_blank" 
                 rel="noreferrer"
-                className="hover:text-zinc-300 flex items-center gap-1 transition-colors"
+                className="hover:text-white flex items-center gap-1 transition-colors"
               >
-                Spotify <ArrowUpRight className="w-3 h-3" />
+                Spotify <ArrowUpRight className="w-3 h-3 text-zinc-500" />
               </a>
               <span>•</span>
               <a 
                 href="https://youtube.com" 
                 target="_blank" 
                 rel="noreferrer"
-                className="hover:text-zinc-300 flex items-center gap-1 transition-colors"
+                className="hover:text-white flex items-center gap-1 transition-colors"
               >
-                YouTube <ArrowUpRight className="w-3 h-3" />
+                YouTube <ArrowUpRight className="w-3 h-3 text-zinc-500" />
               </a>
             </div>
           </div>

@@ -24,7 +24,8 @@ import {
   ExternalLink,
   ChevronUp,
   Play,
-  Settings
+  Settings,
+  Tag
 } from 'lucide-react';
 
 export default function PlaylistDetailPage({
@@ -53,9 +54,9 @@ export default function PlaylistDetailPage({
 
   if (loading) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center space-y-4">
-        <div className="w-8 h-8 rounded-full border-2 border-zinc-700 border-t-white animate-spin" />
-        <p className="font-mono text-xs text-zinc-500 uppercase tracking-wider">Cargando lanzamiento de Tune Tracker...</p>
+      <div className="py-32 flex flex-col items-center justify-center space-y-4">
+        <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+        <p className="font-mono text-xs text-[#8c8c96] uppercase tracking-[0.2em]">Cargando lanzamiento...</p>
       </div>
     );
   }
@@ -81,7 +82,7 @@ export default function PlaylistDetailPage({
   const trackCount = playlist.tracks?.length || 0;
   const totalStreams = (playlist.tracks || []).reduce((acc, t) => acc + (t.plays || 0), 0);
 
-  // Duración total acumulada si hay metadatos de duración
+  // Duración total acumulada
   const totalDurationMs = (playlist.tracks || []).reduce((acc, t) => acc + (t.duration_ms || 0), 0);
   const totalMinutes = Math.floor(totalDurationMs / 60000);
   const totalSeconds = Math.floor((totalDurationMs % 60000) / 1000);
@@ -101,12 +102,12 @@ export default function PlaylistDetailPage({
       });
 
   return (
-    <div className="relative space-y-12">
+    <div className="relative space-y-8 sm:space-y-12">
       {/* Halo de fondo ambiental difuminado adaptado a la portada */}
       <AmbientGlow 
         color={playlist.dominant_color} 
         imageUrl={playlist.cover_url} 
-        opacity={0.34} 
+        opacity={0.30} 
       />
 
       {/* Modal de Artwork */}
@@ -119,34 +120,34 @@ export default function PlaylistDetailPage({
         />
       )}
 
-      {/* Barra de Navegación Superior: Botón Volver y Compartir */}
+      {/* Barra de Navegación Superior: Botón Volver y Acciones */}
       <div className="relative z-10 flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-300 hover:text-white transition-colors bg-zinc-900/90 backdrop-blur-md px-3.5 py-2 rounded-lg border border-zinc-800 hover:border-zinc-600 shadow-lg"
+          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-all bg-[#0e0e13]/80 backdrop-blur-xl px-4 py-2 rounded-full border border-white/[0.08] hover:border-white/20 shadow-md"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
           <span>Volver al Catálogo</span>
         </button>
 
         <div className="flex items-center gap-2">
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-950/80 backdrop-blur-md px-3.5 py-2 rounded-lg border border-zinc-800 hover:border-zinc-700"
-            title="Editar notas y portada en el Estudio"
+            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-all bg-[#0e0e13]/80 backdrop-blur-xl px-4 py-2 rounded-full border border-white/[0.08] hover:border-white/20"
+            title="Personalizar en Estudio"
           >
-            <Settings className="w-3.5 h-3.5" />
+            <Settings className="w-3.5 h-3.5 text-zinc-400" />
             <span className="hidden sm:inline">Personalizar</span>
           </Link>
 
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-950/80 backdrop-blur-md px-3.5 py-2 rounded-lg border border-zinc-800 hover:border-zinc-700"
+            className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-all bg-[#0e0e13]/80 backdrop-blur-xl px-4 py-2 rounded-full border border-white/[0.08] hover:border-white/20"
           >
             {copied ? (
               <>
-                <Check className="w-3.5 h-3.5 text-white" />
-                <span>Copiado</span>
+                <Check className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="text-white">Copiado</span>
               </>
             ) : (
               <>
@@ -158,129 +159,179 @@ export default function PlaylistDetailPage({
         </div>
       </div>
 
-      {/* Estructura Principal */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
-        {/* Columna Izquierda: Artwork & Ficha Discográfica */}
-        <div className="lg:col-span-4 space-y-6 max-w-md mx-auto lg:max-w-none w-full">
-          {/* Portada Principal */}
-          <div className="group relative aspect-square w-full rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
-            {playlist.cover_url ? (
+      {/* Cabecera Estilo Tidal Album Hero */}
+      <section className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8 lg:gap-10 pt-2 pb-6 border-b border-white/[0.08]">
+        {/* Portada Principal */}
+        <div className="group relative w-48 h-48 sm:w-60 sm:h-60 lg:w-72 lg:h-72 rounded-xl overflow-hidden bg-[#101015] border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex-shrink-0">
+          {playlist.cover_url ? (
+            <>
+              <Image
+                src={playlist.cover_url}
+                alt={playlist.title}
+                fill
+                priority
+                sizes="(max-width: 768px) 240px, 288px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <button
+                onClick={() => setArtworkOpen(true)}
+                className="absolute bottom-3 right-3 p-2 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                title="Expandir artwork"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-[#555560] space-y-3 bg-[#0a0a0e]">
+              <Disc className="w-16 h-16 text-[#33333d]" />
+              <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#707080]">Tune Tracker</span>
+            </div>
+          )}
+        </div>
+
+        {/* Metadatos Principales del Álbum / Lanzamiento */}
+        <div className="flex-1 space-y-3 sm:space-y-4 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-2 text-xs font-mono uppercase tracking-[0.18em] text-[#8c8c96]">
+            <span className="px-2.5 py-0.5 rounded-full bg-white/[0.08] text-white font-semibold text-[10px]">
+              {playlist.release_type || 'Semestral'}
+            </span>
+            {playlist.period_str && (
               <>
-                <Image
-                  src={playlist.cover_url}
-                  alt={playlist.title}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <button
-                  onClick={() => setArtworkOpen(true)}
-                  className="absolute bottom-3 right-3 p-2 rounded bg-black/80 backdrop-blur-md border border-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Expandir artwork"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                </button>
+                <span>•</span>
+                <span className="text-zinc-300">{playlist.period_str}</span>
               </>
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-zinc-700 space-y-3 bg-zinc-950">
-                <Disc className="w-16 h-16 text-zinc-600" />
-                <span className="text-xs font-mono uppercase tracking-widest text-zinc-500">Tune Tracker Selection</span>
-              </div>
             )}
           </div>
 
-          {/* Ficha Discográfica del Lanzamiento */}
-          <div className="bg-[#121215]/80 backdrop-blur-md border border-zinc-800/80 rounded-xl p-5 space-y-4">
-            <div className="text-xs font-mono uppercase tracking-widest text-zinc-400 pb-2 border-b border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-                <span>Ficha Técnica</span>
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans leading-tight">
+            {playlist.title}
+          </h1>
+
+          {/* Curador y Métricas en Línea */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-3 text-xs sm:text-sm text-[#8c8c96] font-sans">
+            <Link
+              href={`/u/${playlist.creator_username}`}
+              className="text-white hover:text-cyan-300 font-medium flex items-center gap-1.5 transition-colors"
+            >
+              {playlist.creator_avatar ? (
+                <div className="relative w-5 h-5 rounded-full overflow-hidden border border-zinc-700">
+                  <Image src={playlist.creator_avatar} alt="Avatar" fill className="object-cover" />
+                </div>
+              ) : (
+                <User className="w-4 h-4 text-[#6c6c76]" />
+              )}
+              <span>@{playlist.creator_username}</span>
+            </Link>
+
+            <span className="text-zinc-700">•</span>
+            <span className="font-mono text-zinc-300">{releaseDateFormatted}</span>
+
+            <span className="text-zinc-700">•</span>
+            <span className="font-mono text-zinc-300">{trackCount} canciones</span>
+
+            {durationFormatted && (
+              <>
+                <span className="text-zinc-700">•</span>
+                <span className="font-mono text-zinc-300">{durationFormatted}</span>
+              </>
+            )}
+
+            {totalStreams > 0 && (
+              <>
+                <span className="text-zinc-700">•</span>
+                <span className="font-mono text-cyan-400 flex items-center gap-1">
+                  <Play className="w-3 h-3 fill-cyan-400" />
+                  {totalStreams.toLocaleString('es-ES')} streams
+                </span>
+              </>
+            )}
+          </div>
+
+          {playlist.description && (
+            <p className="text-xs sm:text-sm text-[#8c8c96] font-sans leading-relaxed max-w-2xl pt-1">
+              {playlist.description}
+            </p>
+          )}
+
+          {/* Botones de Escucha en Plataformas */}
+          {(playlist.spotify_url || playlist.youtube_url) && (
+            <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+              {playlist.spotify_url && (
+                <a
+                  href={playlist.spotify_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all shadow-[0_0_16px_rgba(255,255,255,0.25)]"
+                >
+                  <Play className="w-3.5 h-3.5 fill-black" />
+                  <span>Escuchar en Spotify</span>
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              )}
+              {playlist.youtube_url && (
+                <a
+                  href={playlist.youtube_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#121217] border border-white/[0.12] hover:border-white/30 text-white font-semibold text-xs font-mono uppercase tracking-wider transition-all"
+                >
+                  <span>YouTube Music</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Estructura Principal: Ficha Técnica & Tracklist */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        {/* Columna Lateral: Ficha Técnica & Liner Notes */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Ficha Técnica Tidal */}
+          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-5 space-y-4 shadow-xl">
+            <div className="text-xs font-mono uppercase tracking-[0.16em] text-[#8c8c96] pb-3 border-b border-white/[0.06] flex items-center justify-between">
+              <div className="flex items-center gap-2 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <span>Ficha Discográfica</span>
               </div>
-              <span className="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-700 text-[10px] text-zinc-300">
-                {playlist.release_type || 'Semestral'}
-              </span>
+              <span className="text-[10px] text-zinc-400">{playlist.catalog_number || 'TT-01'}</span>
             </div>
 
             <div className="space-y-3 text-xs font-mono">
-              {/* Curador */}
-              <div className="flex items-center justify-between text-zinc-400">
-                <span>Curaduría</span>
-                <Link
-                  href={`/u/${playlist.creator_username}`}
-                  className="text-white hover:underline flex items-center gap-1.5 font-sans"
-                >
-                  {playlist.creator_avatar ? (
-                    <div className="relative w-4 h-4 rounded-full overflow-hidden border border-zinc-700">
-                      <Image src={playlist.creator_avatar} alt="Avatar" fill className="object-cover" />
-                    </div>
-                  ) : (
-                    <User className="w-3.5 h-3.5 text-zinc-500" />
-                  )}
-                  <span>@{playlist.creator_username}</span>
-                </Link>
+              <div className="flex items-center justify-between text-[#8c8c96]">
+                <span>Formato</span>
+                <span className="text-white">{playlist.release_type || 'Semestral'}</span>
               </div>
 
-              {/* Periodo de Tune Tracker */}
-              {playlist.period_str && (
-                <div className="flex items-center justify-between text-zinc-400">
-                  <span>Ciclo Tune Tracker</span>
-                  <span className="text-white font-mono">{playlist.period_str}</span>
+              {playlist.cycle_year && (
+                <div className="flex items-center justify-between text-[#8c8c96]">
+                  <span>Ciclo Anual</span>
+                  <span className="text-white">{playlist.cycle_year} ({playlist.cycle_half === '1' ? '1ra Mitad' : '2da Mitad'})</span>
                 </div>
               )}
 
-              {/* Fecha de Lanzamiento */}
-              <div className="flex items-center justify-between text-zinc-400">
-                <span>Fecha de Lanzamiento</span>
-                <span className="text-white flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-zinc-500" />
-                  {releaseDateFormatted}
-                </span>
-              </div>
-
-              {/* Pistas */}
-              <div className="flex items-center justify-between text-zinc-400">
-                <span>Pistas</span>
+              <div className="flex items-center justify-between text-[#8c8c96]">
+                <span>Pistas Totales</span>
                 <span className="text-white">{trackCount} canciones</span>
               </div>
 
-              {/* Streams Acumulados */}
               {totalStreams > 0 && (
-                <div className="flex items-center justify-between text-zinc-400">
-                  <span>Streams Registrados</span>
-                  <span className="text-white flex items-center gap-1.5 font-mono">
-                    <Play className="w-3 h-3 text-zinc-400 fill-zinc-400" />
-                    {totalStreams.toLocaleString('es-ES')} reproducciones
-                  </span>
+                <div className="flex items-center justify-between text-[#8c8c96]">
+                  <span>Reproducciones</span>
+                  <span className="text-cyan-400 font-bold">{totalStreams.toLocaleString('es-ES')}</span>
                 </div>
               )}
-
-              {/* Duración */}
-              {durationFormatted && (
-                <div className="flex items-center justify-between text-zinc-400">
-                  <span>Duración Total</span>
-                  <span className="text-white flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                    {durationFormatted}
-                  </span>
-                </div>
-              )}
-
-              {/* Catálogo */}
-              <div className="flex items-center justify-between text-zinc-400">
-                <span>Código de Catálogo</span>
-                <span className="text-white font-mono">{playlist.catalog_number || 'TT-01'}</span>
-              </div>
 
               {/* Tags */}
               {playlist.tags && playlist.tags.length > 0 && (
-                <div className="pt-2">
-                  <span className="text-zinc-500 block mb-2">Clasificación:</span>
+                <div className="pt-3 border-t border-white/[0.06]">
+                  <span className="text-[#656570] block mb-2 text-[11px]">Etiquetas:</span>
                   <div className="flex flex-wrap gap-1.5">
                     {playlist.tags.map((tag, i) => (
                       <span
                         key={i}
-                        className="text-[10px] uppercase tracking-wider text-zinc-300 bg-zinc-900 border border-zinc-700 px-2 py-0.5 rounded"
+                        className="text-[10px] uppercase tracking-wider text-zinc-300 bg-[#16161d] border border-white/[0.08] px-2.5 py-0.5 rounded-full"
                       >
                         {tag}
                       </span>
@@ -288,125 +339,61 @@ export default function PlaylistDetailPage({
                   </div>
                 </div>
               )}
-
-              {/* Enlaces de Streaming */}
-              {(playlist.spotify_url || playlist.youtube_url) && (
-                <div className="pt-3 border-t border-zinc-800/80 space-y-2">
-                  <span className="text-zinc-500 block text-[11px]">Plataformas de audio:</span>
-                  <div className="flex flex-col gap-2">
-                    {playlist.spotify_url && (
-                      <a
-                        href={playlist.spotify_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between px-3 py-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors"
-                      >
-                        <span>Escuchar en Spotify</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                    {playlist.youtube_url && (
-                      <a
-                        href={playlist.youtube_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-between px-3 py-2 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white transition-colors"
-                      >
-                        <span>Escuchar en YouTube</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Columna Derecha: Liner Notes & Tracklist */}
-        <div className="lg:col-span-8 space-y-6 sm:space-y-8">
-          {/* Título */}
-          <div className="space-y-2.5 sm:space-y-3">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400">
-              <span>{playlist.release_type || 'Semestral'}</span>
-              <span>•</span>
-              <Link href={`/u/${playlist.creator_username}`} className="hover:text-white transition-colors underline">
-                @{playlist.creator_username}
-              </Link>
-              {playlist.period_str && (
-                <>
-                  <span>•</span>
-                  <span>{playlist.period_str}</span>
-                </>
-              )}
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white font-sans">
-              {playlist.title}
-            </h1>
-
-            {playlist.description && (
-              <p className="text-sm sm:text-base text-zinc-400 font-sans leading-relaxed">
-                {playlist.description}
-              </p>
-            )}
-          </div>
-
-          {/* Liner Notes */}
+          {/* Liner Notes & Memoria Conceptual */}
           {playlist.story && (
-            <section className="bg-[#121215]/60 backdrop-blur-md border border-zinc-800/80 rounded-xl p-4 sm:p-6 space-y-3 sm:space-y-4">
-              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400 pb-2 border-b border-zinc-800">
-                <BookOpen className="w-4 h-4 text-zinc-400" />
-                <span>Liner Notes & Memoria Conceptual</span>
+            <section className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-5 sm:p-6 space-y-3 shadow-xl">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.16em] text-[#8c8c96] pb-3 border-b border-white/[0.06]">
+                <BookOpen className="w-4 h-4 text-cyan-400" />
+                <span>Liner Notes & Memoria</span>
               </div>
 
-              <div className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans space-y-3 whitespace-pre-line">
+              <div className="text-xs sm:text-sm text-[#c8c8d2] leading-relaxed font-sans space-y-3 whitespace-pre-line">
                 {playlist.story}
               </div>
             </section>
           )}
+        </div>
 
-          {/* Tracklist con Streams y Notas */}
-          <section className="bg-[#121215]/80 backdrop-blur-md border border-zinc-800 rounded-xl p-3.5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-zinc-400">
-                <ListMusic className="w-4 h-4 text-zinc-400" />
-                <span>Tracklist & Notas de Curaduría</span>
+        {/* Columna Principal: Tracklist Estilo Tabla Tidal */}
+        <div className="lg:col-span-8 space-y-4">
+          <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-4 sm:p-6 space-y-2 shadow-xl">
+            {/* Cabecera de Columnas Estilo Tidal */}
+            <div className="flex items-center justify-between px-3 sm:px-4 pb-3 border-b border-white/[0.06] text-[11px] font-mono uppercase tracking-wider text-[#6e6e78]">
+              <div className="flex items-center gap-4">
+                <span className="w-6 text-right">#</span>
+                <span>Título / Artista</span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-mono text-zinc-500">
-                {totalStreams > 0 && (
-                  <span className="flex items-center gap-1 text-zinc-400">
-                    <Play className="w-3 h-3" />
-                    {totalStreams} streams
-                  </span>
-                )}
-                <span>
-                  {trackCount} {trackCount === 1 ? 'pista' : 'pistas'}
-                </span>
+              <div className="flex items-center gap-4">
+                <span>Streams</span>
+                <span className="hidden sm:inline w-12 text-right">Tiempo</span>
               </div>
             </div>
 
+            {/* Pistas */}
             {playlist.tracks && playlist.tracks.length > 0 ? (
-              <div className="divide-y divide-zinc-800/40">
+              <div className="divide-y divide-white/[0.03] pt-1">
                 {playlist.tracks.map((track, index) => (
                   <TrackItem key={track.id || index} track={track} index={index} />
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center text-xs font-mono text-zinc-500">
-                No hay pistas registradas en este lanzamiento.
+              <div className="py-12 text-center text-xs font-mono text-[#6e6e78]">
+                No hay canciones registradas en este lanzamiento.
               </div>
             )}
-          </section>
+          </div>
 
-          {/* Navegación al Final de la Página */}
-          <div className="pt-6 border-t border-zinc-800/60 flex items-center justify-end">
+          {/* Botón Subir */}
+          <div className="pt-4 flex items-center justify-end">
             <button
               onClick={scrollToTop}
-              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors py-2 px-3 rounded-lg hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
+              className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#8c8c96] hover:text-white transition-colors py-2 px-4 rounded-full bg-[#0d0d12] border border-white/[0.08] hover:border-white/20"
             >
               <span>Subir al Inicio</span>
-              <ChevronUp className="w-4 h-4" />
+              <ChevronUp className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
