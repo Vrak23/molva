@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Playlist, Track, UserProfile, ReleaseType } from '@/types';
-import { getPlaylists, savePlaylist, getUserProfile } from '@/lib/supabase';
+import { getPlaylists, savePlaylist, getUserProfile, slugify } from '@/lib/supabase';
 import { extractDominantColor } from '@/lib/color-extract';
 import { compressImage } from '@/lib/image-compress';
 import { 
@@ -56,6 +56,7 @@ export default function AdminPage() {
   // Datos de playlists
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -208,6 +209,7 @@ export default function AdminPage() {
 
   // Abrir editor de personalización
   const handleEdit = (playlist: Playlist) => {
+    setIsCreating(false);
     setEditingPlaylist({
       ...playlist,
       tracks: playlist.tracks ? playlist.tracks.map(t => ({ ...t })) : [],
@@ -218,6 +220,39 @@ export default function AdminPage() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const handleCreate = () => {
+    const now = new Date();
+    const title = 'Nueva playlist';
+    const timestamp = now.toISOString();
+
+    setIsCreating(true);
+    setEditingPlaylist({
+      id: `molva-${Date.now()}`,
+      slug: slugify(title),
+      title,
+      description: '',
+      story: '',
+      cover_url: '',
+      dominant_color: '#262626',
+      spotify_url: '',
+      youtube_url: '',
+      tags: ['TUNE TRACKER'],
+      release_date: timestamp.split('T')[0],
+      release_type: 'Semestral',
+      catalog_number: '',
+      creator_id: 'Vrak_23',
+      creator_username: 'Vrak_23',
+      creator_name: userProfile.displayName || 'Vrak23',
+      creator_avatar: userProfile.avatarUrl || '',
+      created_at: timestamp,
+      updated_at: timestamp,
+      tracks: []
+    });
+    setTagInput('TUNE TRACKER');
+    setIsFormOpen(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Subir portada de playlist
@@ -289,8 +324,9 @@ export default function AdminPage() {
     if (res.success) {
       await loadPlaylists();
       setIsFormOpen(false);
+      setIsCreating(false);
       setEditingPlaylist(null);
-      showNotification('¡Personalización guardada y sincronizada!');
+      showNotification(isCreating ? '¡Playlist creada y sincronizada!' : '¡Playlist guardada y sincronizada!');
     } else {
       alert('Error al guardar: ' + res.error);
     }
@@ -481,7 +517,7 @@ export default function AdminPage() {
             <div>
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400 mb-1 font-semibold">
                 <Edit3 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                <span className="truncate">Personalizando Selección</span>
+                <span className="truncate">{isCreating ? 'Creando Playlist' : 'Personalizando Selección'}</span>
                 {editingPlaylist.period_str && (
                   <>
                     <span className="text-zinc-600 hidden xs:inline">•</span>
@@ -497,7 +533,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
+                onClick={() => { setIsFormOpen(false); setIsCreating(false); setEditingPlaylist(null); }}
                 className="w-full sm:w-auto h-9 px-4 rounded-xl sm:rounded-full border border-white/[0.08] bg-[#16161d] text-[#8c8c96] hover:text-white text-xs font-mono uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
               >
                 Cerrar
@@ -819,7 +855,7 @@ export default function AdminPage() {
             <div className="pt-6 border-t border-white/[0.08] flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 w-full">
               <button
                 type="button"
-                onClick={() => { setIsFormOpen(false); setEditingPlaylist(null); }}
+                onClick={() => { setIsFormOpen(false); setIsCreating(false); setEditingPlaylist(null); }}
                 className="h-11 sm:h-10 px-5 rounded-xl sm:rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono uppercase text-[#8c8c96] hover:text-white transition-colors flex items-center justify-center"
               >
                 Cancelar
@@ -829,7 +865,7 @@ export default function AdminPage() {
                 className="h-11 sm:h-10 px-6 rounded-xl sm:rounded-full bg-white text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(255,255,255,0.25)]"
               >
                 <Save className="w-4 h-4" />
-                <span>Guardar Personalización</span>
+                <span>Guardar Playlist</span>
               </button>
             </div>
           </form>
@@ -852,6 +888,13 @@ export default function AdminPage() {
               </p>
             </div>
 
+            <button
+              onClick={handleCreate}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-white text-black font-semibold text-xs font-mono hover:bg-zinc-200 transition-colors"
+            >
+              <span className="text-base leading-none">+</span>
+              <span>Nueva playlist</span>
+            </button>
             <button
               onClick={loadPlaylists}
               disabled={syncing}

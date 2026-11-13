@@ -23,20 +23,23 @@ export async function POST(req: NextRequest) {
   try {
     const playlist = await req.json();
 
-    if (!playlist || !playlist.id) {
+    if (!playlist || typeof playlist !== 'object') {
       return NextResponse.json(
-        { success: false, error: 'Identificador de playlist no válido.' },
+        { success: false, error: 'Datos de playlist no válidos.' },
         { status: 400 }
       );
     }
 
     let supabase = getSupabase();
+    const playlistId = typeof playlist.id === 'string' && playlist.id.trim()
+      ? playlist.id.trim()
+      : `molva-${crypto.randomUUID()}`;
 
     // Obtener la fila correspondiente en spotitracker_curator
     let { data: existingRow, error: fetchErr } = await supabase
       .from('spotitracker_curator')
       .select('*')
-      .eq('id', playlist.id)
+      .eq('id', playlistId)
       .single();
 
     // Reintento con clave verificada si la de Vercel falló
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
       const retry = await supabase
         .from('spotitracker_curator')
         .select('*')
-        .eq('id', playlist.id)
+        .eq('id', playlistId)
         .single();
       existingRow = retry.data;
       fetchErr = retry.error;
@@ -105,27 +108,53 @@ export async function POST(req: NextRequest) {
           notes: editedT?.notes || rawT.notes || ''
         };
       });
+    } else if (!existingRow && Array.isArray(playlist.tracks)) {
+      updatedTracks = playlist.tracks.map((track: any, index: number) => ({
+        ...track,
+        id: track.id || `track-${playlistId}-${index + 1}`,
+        name: track.name || track.title || 'Pista sin título',
+        title: undefined,
+      }));
     }
 
-    let { error: updError } = await supabase
-      .from('spotitracker_curator')
-      .update({
+    const rowData = {
+      id: playlistId,
+      user_id: playlist.creator_id || 'Vrak_23',
+      cycle_year: playlist.cycle_year || null,
+      cycle_half: playlist.cycle_half || null,
+      target_count: playlist.target_count || updatedTracks.length,
+      selected_tracks: updatedTracks,
+      settings: updatedSettings,
+      updated_at: new Date().toISOString()
+    };
+
+    let { error: updError } = existingRow
+      ? await supabase
+        .from('spotitracker_curator')
+        .update({
         settings: updatedSettings,
         selected_tracks: updatedTracks,
         updated_at: new Date().toISOString()
-      })
-      .eq('id', playlist.id);
+        })
+        .eq('id', playlistId)
+      : await supabase
+        .from('spotitracker_curator')
+        .insert(rowData);
 
     if (updError && updError.message.includes('Invalid API key')) {
       supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_ANON_KEY);
-      const retryUpd = await supabase
-        .from('spotitracker_curator')
-        .update({
-          settings: updatedSettings,
-          selected_tracks: updatedTracks,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', playlist.id);
+      const retryUpd = existingRow
+        ? await supabase
+          .from('spotitracker_curator')
+          .update({
+            settings: updatedSettings,
+            selected_tracks: updatedTracks,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', playlistId)
+        : await supabase
+          .from('spotitracker_curator')
+          .insert(rowData);
       updError = retryUpd.error;
     }
 
@@ -139,7 +168,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Playlist sincronizada y guardada en Supabase con éxito.'
+      id: playlistId,
+      message: existingRow
+        ? 'Playlist sincronizada y guardada en Supabase con éxito.'
+        : 'Playlist creada y guardada en Supabase con éxito.'
     });
   } catch (err: any) {
     console.error('Excepción en /api/playlist/save:', err);
