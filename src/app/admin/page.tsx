@@ -28,7 +28,10 @@ import {
   Calendar,
   AlertCircle,
   LogOut,
-  Tag
+  Tag,
+  Loader2,
+  Sparkles,
+  Download
 } from 'lucide-react';
 
 const RELEASE_TYPES: ReleaseType[] = ['Semestral', 'LP', 'EP', 'Compilación', 'Mixtape', 'Single', 'Sesión'];
@@ -59,6 +62,7 @@ export default function AdminPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [importingSpotify, setImportingSpotify] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
   // Notificaciones
@@ -253,6 +257,92 @@ export default function AdminPage() {
     setTagInput('TUNE TRACKER');
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Importar metadatos y canciones desde Spotify
+  const handleImportFromSpotify = async () => {
+    if (!editingPlaylist) return;
+    const spotifyUrl = editingPlaylist.spotify_url?.trim();
+    if (!spotifyUrl) {
+      showNotification('Por favor introduce primero el enlace de la playlist de Spotify.');
+      return;
+    }
+
+    setImportingSpotify(true);
+    try {
+      const res = await fetch('/api/spotify/playlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: spotifyUrl }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(data.error || 'No se pudo cargar la playlist desde Spotify.');
+        return;
+      }
+
+      const sp = data.playlist;
+      const newTitle = sp.title || editingPlaylist.title;
+      const newSlug = slugify(newTitle) || editingPlaylist.slug;
+      const newDescription = sp.description || editingPlaylist.description;
+      const newCover = sp.cover_url || editingPlaylist.cover_url;
+
+      // Extraer halo de color automáticamente a partir de la portada de Spotify
+      let dominantColor = editingPlaylist.dominant_color;
+      if (sp.cover_url) {
+        try {
+          dominantColor = await extractDominantColor(sp.cover_url);
+        } catch {
+          dominantColor = editingPlaylist.dominant_color || '#262626';
+        }
+      }
+
+      // Preservar notas curatoriales si alguna pista ya tenía notas asignadas
+      const existingNotesMap: Record<string, string> = {};
+      (editingPlaylist.tracks || []).forEach(t => {
+        if (t.notes) {
+          const key = `${t.title.toLowerCase()}_${t.artist.toLowerCase()}`;
+          existingNotesMap[key] = t.notes;
+          if (t.spotify_track_id) existingNotesMap[t.spotify_track_id] = t.notes;
+        }
+      });
+
+      const mappedTracks: Track[] = (sp.tracks || []).map((t: any, idx: number) => {
+        const key = `${(t.title || '').toLowerCase()}_${(t.artist || '').toLowerCase()}`;
+        const existingNote = (t.spotify_track_id && existingNotesMap[t.spotify_track_id]) || existingNotesMap[key] || '';
+        return {
+          id: t.id || `track-${editingPlaylist.id}-${idx + 1}`,
+          playlist_id: editingPlaylist.id,
+          position: idx + 1,
+          title: t.title || 'Pista sin título',
+          artist: t.artist || 'Artista desconocido',
+          album: t.album || '',
+          duration_ms: t.duration_ms || 0,
+          plays: 0,
+          notes: existingNote,
+          uri: t.uri || '',
+          spotify_track_id: t.spotify_track_id || '',
+        };
+      });
+
+      setEditingPlaylist({
+        ...editingPlaylist,
+        title: newTitle,
+        slug: newSlug,
+        description: newDescription,
+        cover_url: newCover,
+        dominant_color: dominantColor,
+        tracks: mappedTracks,
+      });
+
+      showNotification(`¡Éxito! Se importaron ${mappedTracks.length} canciones, portada y metadatos desde Spotify.`);
+    } catch (err: any) {
+      console.error('Error importando desde Spotify:', err);
+      alert('Error de conexión al obtener los datos de la playlist de Spotify.');
+    } finally {
+      setImportingSpotify(false);
+    }
   };
 
   // Subir portada de playlist
@@ -542,6 +632,54 @@ export default function AdminPage() {
           </div>
 
           <form onSubmit={handleSavePlaylist} className="space-y-8">
+            {/* Autocompletado desde Spotify */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#1db954]/15 via-[#101913] to-[#0c0c10] border border-[#1db954]/30 space-y-3.5 shadow-lg shadow-[#1db954]/5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#1db954]/20 border border-[#1db954]/40 flex items-center justify-center text-[#1db954] flex-shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                      <span>Autocompletar con Spotify</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#1db954]/20 text-[#1db954] border border-[#1db954]/30">Auto</span>
+                    </h3>
+                    <p className="text-[11px] text-zinc-400">
+                      Pega el link de la playlist para autocompletar título, slug, descripción, portada y todo el tracklist.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                <input
+                  type="url"
+                  placeholder="https://open.spotify.com/playlist/..."
+                  value={editingPlaylist.spotify_url || ''}
+                  onChange={(e) => setEditingPlaylist({ ...editingPlaylist, spotify_url: e.target.value })}
+                  className="flex-1 px-4 py-2.5 bg-[#060608] border border-white/[0.12] rounded-xl text-xs font-mono text-zinc-200 placeholder-[#6e6e78] focus:outline-none focus:border-[#1db954] transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={handleImportFromSpotify}
+                  disabled={importingSpotify || !editingPlaylist.spotify_url}
+                  className="h-10 px-5 rounded-xl bg-[#1db954] hover:bg-[#1ed760] disabled:bg-[#1db954]/30 disabled:text-zinc-500 disabled:cursor-not-allowed text-black font-bold text-xs font-mono uppercase tracking-wider transition-all flex items-center justify-center gap-2 flex-shrink-0 shadow-[0_0_15px_rgba(29,185,84,0.25)]"
+                >
+                  {importingSpotify ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-black" />
+                      <span>Cargando playlist...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 text-black" />
+                      <span>Cargar desde Spotify</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
             {/* 1. Metadatos Principales */}
             <div className="space-y-4">
               <h3 className="text-xs font-mono uppercase tracking-widest text-[#8c8c96] flex items-center gap-2 font-semibold">
@@ -746,20 +884,40 @@ export default function AdminPage() {
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-mono uppercase text-[#8c8c96] mb-1">
                     Enlace de la Playlist en Spotify:
                   </label>
-                  <input
-                    type="url"
-                    placeholder="https://open.spotify.com/playlist/..."
-                    value={editingPlaylist.spotify_url || ''}
-                    onChange={(e) => setEditingPlaylist({ ...editingPlaylist, spotify_url: e.target.value })}
-                    className="w-full px-4 py-2 bg-[#060608] border border-white/[0.1] rounded-xl text-xs font-mono text-zinc-300 focus:outline-none focus:border-cyan-400"
-                  />
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://open.spotify.com/playlist/..."
+                      value={editingPlaylist.spotify_url || ''}
+                      onChange={(e) => setEditingPlaylist({ ...editingPlaylist, spotify_url: e.target.value })}
+                      className="flex-1 px-4 py-2 bg-[#060608] border border-white/[0.1] rounded-xl text-xs font-mono text-zinc-300 focus:outline-none focus:border-[#1db954]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleImportFromSpotify}
+                      disabled={importingSpotify || !editingPlaylist.spotify_url}
+                      className="h-9 px-4 rounded-xl bg-[#1db954] hover:bg-[#1ed760] disabled:bg-[#1db954]/20 disabled:text-zinc-500 disabled:cursor-not-allowed text-black font-semibold text-xs font-mono transition-colors flex items-center justify-center gap-1.5 flex-shrink-0"
+                    >
+                      {importingSpotify ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Cargando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Cargar datos de Spotify</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-mono uppercase text-[#8c8c96] mb-1">
                     Enlace de la Playlist en YouTube:
                   </label>

@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
           notes: editedT?.notes || rawT.notes || ''
         };
       });
-    } else if (!existingRow && Array.isArray(playlist.tracks)) {
+    } else if (Array.isArray(playlist.tracks)) {
       updatedTracks = playlist.tracks.map((track: any, index: number) => ({
         ...track,
         id: track.id || `track-${playlistId}-${index + 1}`,
