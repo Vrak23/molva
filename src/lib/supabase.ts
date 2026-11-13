@@ -311,16 +311,40 @@ export async function savePlaylist(playlist: Playlist): Promise<{ success: boole
   return { success: true };
 }
 
-// Eliminar personalización de playlist
+// Eliminar playlist de Supabase y localmente
 export async function deletePlaylist(id: string): Promise<{ success: boolean; error?: string }> {
   if (typeof window !== 'undefined') {
     try {
+      const res = await fetch('/api/playlist/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Error al eliminar en el servidor.' };
+      }
+
+      // Limpieza local
       const rawMap = localStorage.getItem('molva_customizations_map') || '{}';
       const map = JSON.parse(rawMap);
       delete map[id];
       localStorage.setItem('molva_customizations_map', JSON.stringify(map));
       await deleteLocalPlaylist(id);
-    } catch {}
+
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error al invocar /api/playlist/delete:', err);
+      return { success: false, error: err.message || 'Error de conexión al eliminar la playlist.' };
+    }
+  }
+
+  if (supabase) {
+    const { error } = await supabase
+      .from('spotitracker_curator')
+      .delete()
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
   }
 
   return { success: true };

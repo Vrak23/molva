@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Playlist, Track, UserProfile, ReleaseType } from '@/types';
-import { getPlaylists, savePlaylist, getUserProfile, slugify } from '@/lib/supabase';
+import { getPlaylists, savePlaylist, deletePlaylist, getUserProfile, slugify } from '@/lib/supabase';
 import { extractDominantColor } from '@/lib/color-extract';
 import { compressImage } from '@/lib/image-compress';
 import { 
@@ -31,7 +31,8 @@ import {
   Tag,
   Loader2,
   Sparkles,
-  Download
+  Download,
+  Trash2
 } from 'lucide-react';
 
 const RELEASE_TYPES: ReleaseType[] = ['Semestral', 'LP', 'EP', 'Compilación', 'Mixtape', 'Single', 'Sesión'];
@@ -63,6 +64,7 @@ export default function AdminPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [importingSpotify, setImportingSpotify] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [tagInput, setTagInput] = useState('');
 
   // Notificaciones
@@ -419,6 +421,35 @@ export default function AdminPage() {
       showNotification(isCreating ? '¡Playlist creada y sincronizada!' : '¡Playlist guardada y sincronizada!');
     } else {
       alert('Error al guardar: ' + res.error);
+    }
+  };
+
+  // Eliminar playlist permanentemente
+  const handleDeletePlaylist = async (playlist: Playlist) => {
+    if (!playlist || !playlist.id) return;
+    const confirmDelete = window.confirm(
+      `¿Estás seguro de que deseas eliminar permanentemente la playlist "${playlist.title}"?\n\nEsta acción borrará la playlist y sus canciones de la base de datos.`
+    );
+    if (!confirmDelete) return;
+
+    setDeletingId(playlist.id);
+    try {
+      const res = await deletePlaylist(playlist.id);
+      if (res.success) {
+        showNotification(`Playlist "${playlist.title}" eliminada con éxito.`);
+        if (editingPlaylist?.id === playlist.id) {
+          setIsFormOpen(false);
+          setIsCreating(false);
+          setEditingPlaylist(null);
+        }
+        await loadPlaylists();
+      } else {
+        alert('Error al eliminar la playlist: ' + (res.error || 'Error desconocido'));
+      }
+    } catch (err: any) {
+      alert('Error de conexión al intentar eliminar la playlist.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -1009,22 +1040,42 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Botón de Guardado */}
-            <div className="pt-6 border-t border-white/[0.08] flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-3 w-full">
-              <button
-                type="button"
-                onClick={() => { setIsFormOpen(false); setIsCreating(false); setEditingPlaylist(null); }}
-                className="h-11 sm:h-10 px-5 rounded-xl sm:rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono uppercase text-[#8c8c96] hover:text-white transition-colors flex items-center justify-center"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="h-11 sm:h-10 px-6 rounded-xl sm:rounded-full bg-white text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(255,255,255,0.25)]"
-              >
-                <Save className="w-4 h-4" />
-                <span>Guardar Playlist</span>
-              </button>
+            {/* Botón de Guardado y Eliminación */}
+            <div className="pt-6 border-t border-white/[0.08] flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+              <div>
+                {!isCreating && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePlaylist(editingPlaylist)}
+                    disabled={deletingId === editingPlaylist.id}
+                    className="h-11 sm:h-10 px-4 rounded-xl sm:rounded-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-xs font-mono transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
+                  >
+                    {deletingId === editingPlaylist.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    <span>Eliminar Playlist</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => { setIsFormOpen(false); setIsCreating(false); setEditingPlaylist(null); }}
+                  className="h-11 sm:h-10 px-5 rounded-xl sm:rounded-full bg-[#16161d] border border-white/[0.08] text-xs font-mono uppercase text-[#8c8c96] hover:text-white transition-colors flex items-center justify-center"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="h-11 sm:h-10 px-6 rounded-xl sm:rounded-full bg-white text-black font-bold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(255,255,255,0.25)]"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Guardar Playlist</span>
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -1137,7 +1188,22 @@ export default function AdminPage() {
                         className="h-10 px-5 rounded-xl sm:rounded-full bg-white text-black font-semibold text-xs font-mono uppercase tracking-wider hover:bg-zinc-200 transition-all flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(255,255,255,0.2)]"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
-                        <span>Editar Personalización</span>
+                        <span>Editar</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePlaylist(playlist)}
+                        disabled={deletingId === playlist.id}
+                        className="h-10 px-3.5 rounded-xl sm:rounded-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-xs font-mono transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                        title="Eliminar playlist"
+                      >
+                        {deletingId === playlist.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                        <span>Eliminar</span>
                       </button>
                     </div>
                   </div>
