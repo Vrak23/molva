@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Roboto_Condensed } from 'next/font/google';
 import { ArrowUpRight } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
 const robotoCondensed = Roboto_Condensed({
@@ -13,6 +14,16 @@ const robotoCondensed = Roboto_Condensed({
 export const metadata: Metadata = {
   title: 'Molva',
   description: 'Visualizador y repositorio discográfico de playlists curadas en Tune Tracker.',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Molva',
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +42,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${robotoCondensed.className} bg-[#060608] text-[#ffffff] flex flex-col min-h-screen selection:bg-white selection:text-black antialiased font-sans`}>
+        <ServiceWorkerRegistration />
         {/* Barra de Navegación Tidal */}
         <Navbar />
 
