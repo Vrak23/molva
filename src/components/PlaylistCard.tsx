@@ -73,10 +73,10 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between z-10 space-y-3">
         <div>
           {/* Fila Superior: Curador y Periodo */}
-          <div className="flex items-center justify-between text-xs mb-1.5">
+          <div className="flex min-w-0 items-center justify-between text-xs mb-1.5 gap-2">
             <Link
               href={`/u/${playlist.creator_username}`}
-              className="flex items-center gap-1.5 text-[#8c8c96] hover:text-white transition-colors group/user"
+              className="flex min-w-0 items-center gap-1.5 text-[#8c8c96] hover:text-white transition-colors group/user"
             >
               {playlist.creator_avatar ? (
                 <div className="relative w-4 h-4 rounded-full overflow-hidden border border-zinc-700">
@@ -85,7 +85,7 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
               ) : (
                 <User className="w-3.5 h-3.5 text-[#6c6c76]" />
               )}
-              <span className="font-mono text-[11px] text-[#b0b0ba] group-hover/user:text-white">
+              <span className="truncate font-mono text-[11px] text-[#b0b0ba] group-hover/user:text-white">
                 @{playlist.creator_username}
               </span>
             </Link>

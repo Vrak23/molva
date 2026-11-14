@@ -112,7 +112,7 @@ export default function UserProfilePage() {
                 <span>Curador Principal • Tune Tracker</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans">
+              <h1 className="break-words text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white font-sans">
                 {profile.displayName || profile.username}
               </h1>
 

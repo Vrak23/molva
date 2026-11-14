@@ -54,7 +54,7 @@ export default function RootLayout({
         {/* Pie de Página Estilo Tidal */}
         <footer className="w-full border-t border-white/[0.07] bg-[#060608]/90 py-8 sm:py-10 mt-16 sm:mt-24 text-xs font-mono text-[#8c8c96]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 text-center sm:text-left">
               <span className="inline-block w-2 h-2 rounded-sm bg-white rotate-45 shadow-[0_0_8px_rgba(255,255,255,0.4)]"></span>
               <span className="tracking-wider uppercase text-zinc-300 font-semibold text-[11px]">Molva</span>
               <span className="text-zinc-600">•</span>
