@@ -51,22 +51,27 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-xl bg-[#060608]/80 border-b border-white/[0.08] transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-16 flex items-center justify-between">
-        {/* Lado Izquierdo: Logotipo Estilo Tidal (Rombo Geométrico) */}
+        {/* Lado Izquierdo: Identidad de Molva */}
         <div className="flex items-center gap-4">
           <Link 
             href="/" 
             className="flex items-center gap-3 group transition-opacity hover:opacity-90"
+            aria-label="Ir al inicio de Molva"
           >
-            {/* Ícono de rombos geométricos inspirado en Tidal */}
-            <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 bg-white rotate-45 transform transition-transform group-hover:scale-110 shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-              <div className="w-2.5 h-2.5 bg-white/70 rotate-45 transform transition-transform group-hover:scale-110" />
-            </div>
+            <Image
+              src="/icon.svg"
+              alt=""
+              width={32}
+              height={32}
+              className="rounded-[9px] ring-1 ring-cyan-400/30 shadow-[0_0_16px_rgba(0,240,255,0.12)] transition-transform group-hover:scale-105"
+              priority
+            />
 
             <div className="flex items-center gap-1.5">
               <span className="text-base sm:text-lg font-bold tracking-[0.25em] text-white font-sans uppercase">
                 MOLVA
               </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.8)]" />
             </div>
           </Link>
         </div>
@@ -78,8 +83,8 @@ export function Navbar() {
               href="/admin" 
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border transition-all ${
                 pathname === '/admin'
-                  ? 'bg-white text-black font-semibold border-white shadow-[0_0_12px_rgba(255,255,255,0.3)]'
-                  : 'bg-[#121217] border-white/[0.12] text-zinc-200 hover:text-white hover:border-white/30'
+                  ? 'bg-cyan-400 text-black font-semibold border-cyan-300 shadow-[0_0_16px_rgba(0,240,255,0.25)]'
+                  : 'bg-[#121217] border-white/[0.12] text-zinc-200 hover:text-cyan-300 hover:border-cyan-400/40'
               }`}
             >
               {user.avatarUrl ? (
@@ -96,10 +101,10 @@ export function Navbar() {
           ) : (
             <Link 
               href="/admin" 
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/[0.12] bg-[#121217] text-[#8c8c96] hover:text-white hover:border-white/30 transition-all text-xs font-mono"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/[0.12] bg-[#121217] text-[#8c8c96] hover:text-cyan-300 hover:border-cyan-400/40 transition-all text-xs font-mono"
               title="Acceso al Estudio"
             >
-              <Lock className="w-3 h-3 text-[#8c8c96]" />
+              <Lock className="w-3 h-3 text-cyan-400/70" />
               <span>Estudio</span>
             </Link>
           )}

@@ -117,7 +117,7 @@ export default function HomePage() {
   return (
     <div className="space-y-8 sm:space-y-12">
       {/* Encabezado Editorial Limpio */}
-      <section className="pt-2 pb-5 border-b border-white/[0.08]">
+      <section className="pt-2 pb-5 border-b border-cyan-400/20">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-[#8c8c96]">
             <span className="w-1.5 h-1.5 bg-cyan-400 rotate-45 shadow-[0_0_6px_rgba(0,240,255,0.7)]" />
@@ -146,7 +146,7 @@ export default function HomePage() {
                 placeholder="Buscar por título, artista o etiqueta..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 bg-[#0e0e13] border border-white/[0.08] rounded-lg text-xs text-zinc-100 placeholder-[#6e6e78] focus:outline-none focus:border-white/30 transition-colors font-sans"
+                className="w-full h-10 pl-10 pr-4 bg-[#0e0e13] border border-white/[0.08] rounded-lg text-xs text-zinc-100 placeholder-[#6e6e78] focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/20 transition-colors font-sans"
               />
             </div>
 
@@ -154,10 +154,10 @@ export default function HomePage() {
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button
                 onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
-                className="w-full sm:w-auto h-10 flex items-center justify-center gap-2 px-3.5 rounded-lg bg-[#0e0e13] border border-white/[0.08] hover:border-white/20 text-xs font-mono text-[#8c8c96] hover:text-white transition-colors"
+                className="w-full sm:w-auto h-10 flex items-center justify-center gap-2 px-3.5 rounded-lg bg-[#0e0e13] border border-white/[0.08] hover:border-cyan-400/40 text-xs font-mono text-[#8c8c96] hover:text-cyan-300 transition-colors"
                 title="Cambiar orden de fecha"
               >
-                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                <Calendar className="w-3.5 h-3.5 text-cyan-400/70" />
                 <span>Fecha: {sortOrder === 'desc' ? 'Más recientes' : 'Más antiguas'}</span>
                 <ArrowUpDown className="w-3 h-3 text-[#6e6e78]" />
               </button>
